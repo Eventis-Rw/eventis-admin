@@ -1,5 +1,5 @@
-import { OverviewDashboard } from "@/components/admin/overview-dashboard";
+import { redirect } from "next/navigation";
 
-export default function AdminOverviewPage() {
-  return <OverviewDashboard />;
+export default function AdminPage() {
+  redirect("/admin/dashboard");
 }

@@ -10,7 +10,7 @@ export default function NotFound() {
         <p className="mt-2 text-sm text-zinc-500">
           This dashboard route does not exist yet. Return to the overview page.
         </p>
-        <Link href="/admin" className="mt-6 inline-block">
+        <Link href="/admin/dashboard" className="mt-6 inline-block">
           <Button>Back to dashboard</Button>
         </Link>
       </div>

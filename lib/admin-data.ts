@@ -14,7 +14,7 @@ export type NavigationItem = {
 };
 
 export const navigationItems: NavigationItem[] = [
-  { label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { label: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Projects", href: "/admin/projects", icon: BriefcaseBusiness },
@@ -50,6 +50,7 @@ export const pipelineItems = [
 
 export const pageTitles: Record<string, string> = {
   "/admin": "Overview",
+  "/admin/dashboard": "Overview",
   "/admin/analytics": "Analytics",
   "/admin/users": "Users",
   "/admin/projects": "Projects",
