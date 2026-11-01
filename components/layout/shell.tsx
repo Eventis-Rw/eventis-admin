@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Check, ChevronsUpDown, LogOut, Menu, Moon, Sun, X } from "lucide-react";
+import { Check, ChevronsUpDown, Heart, LogOut, Menu, Moon, Sun, X } from "lucide-react";
 
 import { logoutAction } from "@/app/login/actions";
 import { BrandMark } from "@/components/layout/brand-mark";
@@ -28,8 +28,15 @@ export function ConsoleShell({ user, mock, children }: { user: ShellUser; mock: 
 
   const current = [...platform.nav].reverse().find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)) ?? platform.nav[0];
 
+  const findLove = platform.id === "find-love";
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("find-love", findLove);
+    return () => document.documentElement.classList.remove("find-love");
+  }, [findLove]);
+
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
+    <div className={cn("min-h-screen bg-background lg:grid lg:grid-cols-[260px_1fr]", findLove && "find-love")}>
       {menuOpen ? <div className="fixed inset-0 z-30 bg-overlay lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden /> : null}
 
       <aside
@@ -40,9 +47,15 @@ export function ConsoleShell({ user, mock, children }: { user: ShellUser; mock: 
       >
         <div className="flex items-center justify-between px-2 pb-4">
           <div className="flex items-center gap-2.5">
-            <BrandMark />
+            {findLove ? (
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                <Heart className="h-4 w-4" aria-hidden />
+              </span>
+            ) : (
+              <BrandMark />
+            )}
             <div className="leading-tight">
-              <p className="text-sm font-extrabold tracking-tight">EVENTIS</p>
+              <p className="text-sm font-extrabold tracking-tight">{findLove ? "FIND LOVE" : "EVENTIS"}</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Admin</p>
             </div>
           </div>
@@ -64,7 +77,11 @@ export function ConsoleShell({ user, mock, children }: { user: ShellUser; mock: 
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                  active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  active
+                    ? findLove
+                      ? "bg-primary-soft text-primary"
+                      : "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden />
