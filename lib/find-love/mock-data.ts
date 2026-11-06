@@ -1,0 +1,68 @@
+import type { Point } from "@/components/shared/charts";
+
+export const FIND_LOVE_OVERVIEW = {
+  metrics: {
+    totalMembers: "12,450",
+    newMembers: "1,284",
+    activeSubscriptions: "7,240",
+    pendingVerifications: "86",
+    overdueInstallments: "124",
+    outstandingBalance: "RWF 3.42M",
+  },
+  registrations: [
+    { label: "14 Oct", value: 82 },
+    { label: "15 Oct", value: 97 },
+    { label: "16 Oct", value: 103 },
+    { label: "17 Oct", value: 88 },
+    { label: "18 Oct", value: 121 },
+    { label: "19 Oct", value: 134 },
+    { label: "20 Oct", value: 115 },
+    { label: "21 Oct", value: 146 },
+    { label: "22 Oct", value: 153 },
+    { label: "23 Oct", value: 129 },
+    { label: "24 Oct", value: 174 },
+    { label: "25 Oct", value: 162 },
+    { label: "26 Oct", value: 188 },
+    { label: "27 Oct", value: 201 },
+  ] satisfies Point[],
+  revenue: [
+    { label: "Nov", value: 1820 },
+    { label: "Dec", value: 2140 },
+    { label: "Jan", value: 1980 },
+    { label: "Feb", value: 2360 },
+    { label: "Mar", value: 2510 },
+    { label: "Apr", value: 2290 },
+    { label: "May", value: 2780 },
+    { label: "Jun", value: 2640 },
+    { label: "Jul", value: 3020 },
+    { label: "Aug", value: 2890 },
+    { label: "Sep", value: 3260 },
+    { label: "Oct", value: 3480 },
+  ] satisfies Point[],
+  accountTypes: [
+    { label: "Private", value: 7820, color: "var(--primary)" },
+    { label: "Public", value: 4630, color: "var(--accent)" },
+  ],
+  paymentStatuses: [
+    { label: "Successful", value: 7240, color: "var(--success)" },
+    { label: "Pending", value: 386, color: "var(--warning)" },
+    { label: "Overdue", value: 124, color: "var(--destructive)" },
+  ],
+  connections: {
+    accepted: "5,476",
+    pending: "682",
+    reported: "37",
+  },
+  verificationQueue: [
+    { id: "FL-012940", name: "Maya N.", document: "National ID", submitted: "12 min ago" },
+    { id: "FL-012936", name: "Aline K.", document: "Passport", submitted: "38 min ago" },
+    { id: "FL-012928", name: "David M.", document: "National ID", submitted: "1 hr ago" },
+    { id: "FL-012917", name: "Grace U.", document: "Passport", submitted: "2 hrs ago" },
+  ],
+  activity: [
+    { title: "Identity verification submitted", detail: "Maya N. · National ID", time: "12 min ago", type: "verification" },
+    { title: "Subscription payment received", detail: "Private monthly plan · RWF 15,000", time: "24 min ago", type: "payment" },
+    { title: "Safety report needs review", detail: "Profile reported · Case FL-R-208", time: "41 min ago", type: "report" },
+    { title: "New connection accepted", detail: "Connection request · FL-C-4981", time: "1 hr ago", type: "connection" },
+  ],
+};

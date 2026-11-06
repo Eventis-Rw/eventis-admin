@@ -1,14 +1,23 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  BadgeCheck,
+  BarChart3,
+  Bell,
   CalendarDays,
-  ClipboardList,
+  CreditCard,
   Flag,
+  HeartHandshake,
+  Images,
   LayoutDashboard,
   Building2,
+  MessageSquare,
   ScrollText,
   Settings,
+  ShieldAlert,
   Ticket,
+  UserCog,
   Users,
+  Wallet,
 } from "lucide-react";
 
 export type PlatformId = "eventis" | "find-love";
@@ -52,8 +61,23 @@ export const platforms: Record<PlatformId, Platform> = {
     name: "Find Love",
     tagline: "Dating & connections",
     basePath: "/find-love",
-    enabled: false,
-    nav: [{ label: "Overview", href: "/find-love", icon: ClipboardList, status: "unavailable" }],
+    enabled: true,
+    nav: [
+      { label: "Dashboard", href: "/find-love", icon: LayoutDashboard, status: "available" },
+      { label: "User Management", href: "/find-love/users", icon: Users, status: "available" },
+      { label: "Identity Verification", href: "/find-love/verification", icon: BadgeCheck, status: "available" },
+      { label: "Profiles & Photos", href: "/find-love/profiles", icon: Images, status: "available" },
+      { label: "Subscriptions & Pricing", href: "/find-love/subscriptions", icon: CreditCard, status: "available" },
+      { label: "Payments & Installments", href: "/find-love/payments", icon: Wallet, status: "available" },
+      { label: "Connections", href: "/find-love/connections", icon: HeartHandshake, status: "available" },
+      { label: "Messages & Support", href: "/find-love/support", icon: MessageSquare, status: "available" },
+      { label: "Reports & Safety", href: "/find-love/safety", icon: ShieldAlert, status: "available" },
+      { label: "Statistics & Reports", href: "/find-love/statistics", icon: BarChart3, status: "available" },
+      { label: "Notifications", href: "/find-love/notifications", icon: Bell, status: "available" },
+      { label: "Admin Users & Permissions", href: "/find-love/admins", icon: UserCog, status: "available" },
+      { label: "Audit Logs", href: "/find-love/audit", icon: ScrollText, status: "available" },
+      { label: "Settings", href: "/find-love/settings", icon: Settings, status: "available" },
+    ],
   },
 };
 

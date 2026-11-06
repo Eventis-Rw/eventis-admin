@@ -23,6 +23,7 @@
   --destructive: #dc2626;
   --destructive-soft: rgba(239, 68, 68, 0.12);
   --info-soft: rgba(2, 132, 199, 0.12);
+  --primary-soft: rgba(2, 132, 199, 0.12);
   --overlay: rgba(8, 12, 28, 0.45);
   --shadow: 0 1px 2px rgba(10, 16, 34, 0.04), 0 8px 24px rgba(10, 16, 34, 0.05);
 }
@@ -48,8 +49,88 @@
   --destructive: #ff5d6c;
   --destructive-soft: rgba(255, 93, 108, 0.14);
   --info-soft: rgba(0, 163, 255, 0.16);
+  --primary-soft: rgba(0, 163, 255, 0.16);
   --overlay: rgba(4, 6, 16, 0.65);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.find-love {
+  --background: #f4f7ff;
+  --foreground: #10162c;
+  --card: #ffffff;
+  --card-foreground: #10162c;
+  --surface: #f4f7ff;
+  --primary: #f0599a;
+  --primary-foreground: #10060d;
+  --accent: #f0599a;
+  --muted: #eef2f7;
+  --muted-foreground: #475569;
+  --border: #cbd5e1;
+  --input: #ffffff;
+  --ring: rgba(240, 89, 154, 0.35);
+  --success: #15803d;
+  --success-soft: rgba(21, 128, 61, 0.12);
+  --warning: #b45309;
+  --warning-soft: rgba(180, 83, 9, 0.14);
+  --destructive: #b91c1c;
+  --destructive-soft: rgba(185, 28, 28, 0.12);
+  --info-soft: rgba(240, 89, 154, 0.12);
+  --primary-soft: #fce7f3;
+  --overlay: rgba(16, 22, 44, 0.45);
+  --shadow: 0 1px 2px rgba(16, 22, 44, 0.04), 0 8px 24px rgba(16, 22, 44, 0.05);
+}
+
+.dark.find-love,
+.dark .find-love {
+  --background: #10162c;
+  --foreground: #f4f7ff;
+  --card: #171e38;
+  --card-foreground: #f4f7ff;
+  --surface: #141a32;
+  --primary: #f0599a;
+  --primary-foreground: #10060d;
+  --accent: #f0599a;
+  --muted: rgba(255, 255, 255, 0.08);
+  --muted-foreground: #cbd5e1;
+  --border: rgba(203, 213, 225, 0.18);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: rgba(240, 89, 154, 0.45);
+  --success: #4ade80;
+  --success-soft: rgba(21, 128, 61, 0.22);
+  --warning: #fbbf24;
+  --warning-soft: rgba(180, 83, 9, 0.22);
+  --destructive: #f87171;
+  --destructive-soft: rgba(185, 28, 28, 0.22);
+  --info-soft: rgba(240, 89, 154, 0.16);
+  --primary-soft: rgba(240, 89, 154, 0.18);
+  --overlay: rgba(4, 6, 16, 0.65);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.find-love {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-surface: var(--surface);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-info-soft: var(--info-soft);
+  --color-primary-soft: var(--primary-soft);
+  --color-overlay: var(--overlay);
+  --shadow-card: var(--shadow);
 }
 
 @theme inline {
@@ -73,6 +154,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-soft: var(--destructive-soft);
   --color-info-soft: var(--info-soft);
+  --color-primary-soft: var(--primary-soft);
   --color-overlay: var(--overlay);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --shadow-card: var(--shadow);
