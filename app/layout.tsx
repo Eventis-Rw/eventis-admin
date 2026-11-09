@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { InlineScript } from "@/components/shared/inline-script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <InlineScript html={themeScript} />
       </head>
       <body className="min-h-full bg-background font-sans text-foreground antialiased">{children}</body>
     </html>
