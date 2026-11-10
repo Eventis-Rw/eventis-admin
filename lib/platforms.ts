@@ -50,6 +50,8 @@ export const platforms: Record<PlatformId, Platform> = {
       { label: "Users", href: "/eventis/users", icon: Users, status: "available" },
       { label: "Events", href: "/eventis/events", icon: CalendarDays, status: "partial" },
       { label: "Bookings & tickets", href: "/eventis/bookings", icon: Ticket, status: "unavailable" },
+      { label: "Plans & pricing", href: "/eventis/plans", icon: CreditCard, status: "available" },
+      { label: "Installments", href: "/eventis/installments", icon: Wallet, status: "available" },
       { label: "Organisers", href: "/eventis/organisers", icon: Building2, status: "partial" },
       { label: "Reports & messages", href: "/eventis/moderation", icon: Flag, status: "unavailable" },
       { label: "Audit log", href: "/eventis/audit", icon: ScrollText, status: "unavailable" },

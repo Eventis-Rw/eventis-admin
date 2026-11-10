@@ -9,7 +9,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:plans": "node tests/organiser-plans.test.mjs",
+    "test:installments": "node tests/installments.test.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
