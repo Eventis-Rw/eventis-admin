@@ -277,3 +277,30 @@ The global typography and dropdown improvements also benefit those screens.
 > “The admin now controls both what an organiser purchase costs and how it is repaid. The frontend
 > workflow is connected from pricing through agreement creation, payments and monitoring. The next
 > integration step is shared backend storage and live payment and messaging services.”
+
+
+## Development tools
+
+`npm run clean` resets the Next.js build cache. Development uses Turbopack by default;
+use `npm run dev -- --webpack` to select Webpack.
+
+## Troubleshooting
+
+**`You are using Node.js ... Next.js requires ">=20.9.0"`**
+Run `nvm use` (and `nvm install` once) inside the project; `.nvmrc` selects Node 20.20.2.
+
+**Slow first start or `Slow filesystem detected`**
+Persistent Turbopack dev caching is disabled in `next.config.ts` because it is counterproductive on slow disks
+(it previously grew `.next` to ~1 GB and delayed startup). If startup regresses, reset the cache:
+
+```bash
+npm run clean && npm run dev
+```
+
+Pages are compiled on demand, so the first visit to a route is slower than later visits.
+
+**Port 3000 is already in use**
+Stop the other server, or start on a different port: `npm run dev -- -p 3001`.
+
+**Remote images fail with `hostname ... is not configured`**
+Add the host to `images.remotePatterns` in `next.config.ts`. `images.unsplash.com` is already allowed for the mock data.

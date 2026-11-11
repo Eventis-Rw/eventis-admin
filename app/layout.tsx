@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { InlineScript } from "@/components/shared/inline-script";
 import "./globals.css";
 
 const inter = localFont({
@@ -29,7 +30,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <InlineScript html={themeScript} />
       </head>
       <body className="min-h-full bg-background font-sans text-foreground antialiased">
         {children}

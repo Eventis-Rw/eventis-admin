@@ -83,7 +83,7 @@ export function ProfilesView({ photos: initialPhotos }: ProfilesViewProps) {
       </section>
 
       {/* Filter Bar */}
-      <Card className="flex items-center justify-between p-4">
+      <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-sm font-semibold text-foreground">Filter Moderation Queue</span>
         <div className="flex items-center gap-2">
           <select
@@ -101,18 +101,29 @@ export function ProfilesView({ photos: initialPhotos }: ProfilesViewProps) {
       </Card>
 
       {/* Photo Gallery Grid */}
-      <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {filtered.map((photo) => (
-          <Card key={photo.id} className="overflow-hidden flex flex-col group">
-            <div className="relative aspect-square w-full bg-slate-900 overflow-hidden">
+          <Card key={photo.id} className="flex items-center gap-3 p-2.5 transition-colors hover:bg-muted/40">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-900">
               <Image
                 src={photo.url}
                 alt={`Photo for ${photo.userName}`}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 768px) 100vw, 25vw"
+                className="object-cover"
+                sizes="56px"
               />
-              <div className="absolute top-2 left-2 flex gap-1.5">
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <Link
+                href={`/find-love/users/${photo.userId}`}
+                className="block truncate text-xs font-semibold text-foreground hover:text-primary"
+                title={photo.userName}
+              >
+                {photo.userName}
+              </Link>
+              <p className="truncate font-mono text-[10px] text-muted-foreground">{photo.userId}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-1">
                 <Badge
                   tone={
                     photo.status === "approved"
@@ -130,40 +141,29 @@ export function ProfilesView({ photos: initialPhotos }: ProfilesViewProps) {
                 <Badge tone="neutral" className="bg-black/60 text-white">
                   {photo.type}
                 </Badge>
-              </div>
-            </div>
-
-            <div className="p-4 flex-1 flex flex-col justify-between">
-              <div>
-                <Link href={`/find-love/users/${photo.userId}`} className="font-semibold text-sm text-foreground hover:text-primary">
-                  {photo.userName}
-                </Link>
-                <p className="text-xs text-muted-foreground font-mono">{photo.userId}</p>
-                {photo.reason ? (
-                  <p className="mt-2 text-xs text-destructive bg-destructive-soft p-2 rounded-lg leading-relaxed">
-                    <strong>Reason:</strong> {photo.reason}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-[10px] text-muted-foreground">
                   {new Date(photo.uploadedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
                 </span>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={() => {
-                    setSelectedPhoto(photo);
-                    setDecision(photo.status === "pending" || photo.status === "flagged" ? "approved" : photo.status);
-                    setReason(photo.reason || "");
-                  }}
-                >
-                  Moderate
-                </Button>
               </div>
+              {photo.reason ? (
+                <p className="mt-1 truncate text-[10px] text-destructive" title={photo.reason}>
+                  {photo.reason}
+                </p>
+              ) : null}
             </div>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 shrink-0 px-2 text-[11px]"
+              onClick={() => {
+                setSelectedPhoto(photo);
+                setDecision(photo.status === "pending" || photo.status === "flagged" ? "approved" : photo.status);
+                setReason(photo.reason || "");
+              }}
+            >
+              Moderate
+            </Button>
           </Card>
         ))}
       </div>

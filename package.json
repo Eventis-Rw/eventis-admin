@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:plans": "node tests/organiser-plans.test.mjs",
-    "test:installments": "node tests/installments.test.mjs"
+    "test:installments": "node tests/installments.test.mjs",
+    "clean": "rm -rf .next"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
