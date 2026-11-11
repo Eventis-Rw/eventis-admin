@@ -66,11 +66,11 @@ export const platforms: Record<PlatformId, Platform> = {
     enabled: true,
     nav: [
       { label: "Dashboard", href: "/find-love", icon: LayoutDashboard, status: "available" },
-      { label: "User Management", href: "/find-love/users", icon: Users, status: "available" },
+      { label: "Members & Access", href: "/find-love/users", icon: Users, status: "available" },
       { label: "Identity Verification", href: "/find-love/verification", icon: BadgeCheck, status: "available" },
       { label: "Profiles & Photos", href: "/find-love/profiles", icon: Images, status: "available" },
       { label: "Subscriptions & Pricing", href: "/find-love/subscriptions", icon: CreditCard, status: "available" },
-      { label: "Payments & Installments", href: "/find-love/payments", icon: Wallet, status: "available" },
+      { label: "Membership Payments", href: "/find-love/payments", icon: Wallet, status: "available" },
       { label: "Connections", href: "/find-love/connections", icon: HeartHandshake, status: "available" },
       { label: "Messages & Support", href: "/find-love/support", icon: MessageSquare, status: "available" },
       { label: "Reports & Safety", href: "/find-love/safety", icon: ShieldAlert, status: "available" },
@@ -78,7 +78,7 @@ export const platforms: Record<PlatformId, Platform> = {
       { label: "Notifications", href: "/find-love/notifications", icon: Bell, status: "available" },
       { label: "Admin Users & Permissions", href: "/find-love/admins", icon: UserCog, status: "available" },
       { label: "Audit Logs", href: "/find-love/audit", icon: ScrollText, status: "available" },
-      { label: "Settings", href: "/find-love/settings", icon: Settings, status: "available" },
+      { label: "Membership Rules", href: "/find-love/settings", icon: Settings, status: "available" },
     ],
   },
 };

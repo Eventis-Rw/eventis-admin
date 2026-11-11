@@ -12,6 +12,7 @@
     "lint": "eslint",
     "test:plans": "node tests/organiser-plans.test.mjs",
     "test:installments": "node tests/installments.test.mjs",
+    "test:findlove": "node tests/findlove-memberships.test.mjs",
     "clean": "rm -rf .next"
   },
   "dependencies": {

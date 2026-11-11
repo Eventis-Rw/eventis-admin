@@ -1,7 +1,7 @@
 # Eventis Admin
 
 Admin console for the Eventis platform (Next.js 16, React 19, Tailwind v4). A platform switcher separates
-**Eventis** from **Find Love** (which has separate demo subscription and payment screens).
+**Eventis** from **Find Love**, with separate organiser pricing, installment and membership workflows.
 
 ## Run
 
@@ -52,7 +52,7 @@ To check the project, run `npm run lint` and `npm run build`. After a successful
 app/
 ├── (console)/            # Authenticated shell (layout, error boundary)
 │   ├── eventis/          # Eventis platform: overview, users, events, organisers, bookings, moderation, audit, settings
-│   └── find-love/        # Find Love placeholder
+│   └── find-love/        # FindLove memberships, payments and trust operations
 ├── api/session/clear/    # Clears invalid sessions
 ├── login/                # Sign-in page and server actions
 ├── globals.css           # Design tokens (light/dark)
@@ -125,8 +125,8 @@ reminders, per-currency collections reports, date/customer/status/frequency filt
 
 Records persist in this browser under `eventis.installments.v1`. This is a frontend demo: recording
 payments/refunds moves no money and reminders send no messages. It is not a shared payment ledger.
-No new installment API or provider integration is introduced. Find Love's existing pricing and
-payments/installments screens remain separate and unchanged.
+No new installment API or provider integration is introduced. FindLove has a separate membership
+demo described below; its full-period purchases do not use Eventis installment agreements.
 
 Run `npm run test:installments` for the repayment and lifecycle tests in addition to the checks above.
 
@@ -268,15 +268,95 @@ app's starting prices informed the catalog, but the admin does not update that a
 integration needs shared storage/API contracts, payment reconciliation and a messaging provider.
 
 **What about Find Love?** The original generic installment specification did not name Find Love.
-This work targets Eventis organiser purchases. Find Love retains its separate, pre-existing demo
-subscription/pricing and payment/installment screens; its payment behavior was not changed.
-The global typography and dropdown improvements also benefit those screens.
+Eventis installment agreements target organiser purchases. FindLove now has separate full-payment
+memberships aligned with the mobile catalog, plus pricing, access, verification and safety controls.
+See the FindLove demonstration below. The mobile app itself has not been edited.
 
 ### The closing statement
 
 > “The admin now controls both what an organiser purchase costs and how it is repaid. The frontend
 > workflow is connected from pricing through agreement creation, payments and monitoring. The next
 > integration step is shared backend storage and live payment and messaging services.”
+
+
+## FindLove membership management
+
+The membership demo follows the existing mobile app rules. Both Public and Private are paid tiers,
+with 7-day, 30-day and 365-day plans. Starting RWF prices are Public **499 / 999 / 9,999** and
+Private **999 / 2,499 / 24,999**. These are the mobile app’s placeholder prices, not approved rates.
+Private profiles remain discoverable. The distinction is connection privileges:
+Public can initiate with Public; Private can initiate with either tier; Public can accept a
+Private member’s request. Discovery is country-scoped. Before acceptance, each side gets one
+text message of up to 200 characters. There is no FindLove installment billing, incognito,
+boosts, grace-period access or automatic renewal in this workflow.
+
+| Screen | Demonstration |
+| --- | --- |
+| `/find-love` | Shared membership, revenue and access totals; links to operations |
+| `/find-love/subscriptions` | Edit six plan prices; enable/disable new purchases with a reason |
+| `/find-love/settings` | Configure all four initiation permissions and test member eligibility |
+| `/find-love/users` | Search/filter members; grant, extend, revoke, suspend, ban or restore access |
+| `/find-love/users/[id]` | View the member’s saved price, expiry and connection permissions |
+| `/find-love/payments` | Simulate successful/pending/failed full payments and settle pending payments |
+| `/find-love/verification` | Approve, reject or request resubmission for synthetic adult-verification cases |
+| `/find-love/safety` | Review synthetic reports; resolve/dismiss or suspend/ban the reported account |
+| `/find-love/statistics` | Filter payments by customer, tier, status and date; export the selection as CSV |
+| `/find-love/audit` | Review timestamped changes and reasons, recorded as Demo Admin |
+
+All these screens use the same versioned browser record, `eventis.findlove.memberships.v1`.
+Changes survive reload and synchronize between tabs in the same browser. The seed date is
+10 November 2026. The demo uses synthetic members and case metadata; it does not store ID uploads.
+Existing photo moderation, support, notification and staff screens remain separate legacy demos;
+they are not integrated into this membership record.
+
+### Rules worth explaining during the presentation
+
+- Access requires an active account, verified adult eligibility and an active membership with a
+  valid future expiry. Status and expiry refresh every 30 seconds and when the window regains focus.
+- Prices and permissions are copied into purchases. Updating a plan cannot change an existing
+  membership’s saved price, expiry or permissions. Disabling a plan stops new checkout attempts.
+- A successful same-tier renewal adds its duration after the remaining days. Early renewals and
+  extensions preserve the existing connection permissions. New memberships, including renewals
+  after expiry, use the current configured permissions.
+- Switching an active membership’s tier requires an explicit revocation first. The demo does not
+  calculate upgrade credits or prorated prices. Revocation does not imply a refund.
+- Complimentary grants/extensions create no collected revenue. Grants require verified adults
+  with active accounts; restoration alone does not bypass verification or membership expiry.
+- Pending/failed payments do not activate access. Pending checkout locks its quoted price and
+  permissions; settling it uses that quote even if the plan is subsequently edited or disabled.
+  A member cannot start another checkout while a payment is pending.
+- Verification approval does not grant a subscription. A safety suspension blocks access immediately.
+  Every management action requires a reason. The local activity log is demo data, not a secure,
+  immutable production audit trail.
+
+### A five-minute FindLove demonstration
+
+1. Open **Subscriptions & Pricing**. Explain the two paid tiers and three fixed durations. Edit a
+   price with a reason; point out that existing member terms do not change.
+2. Open **Membership Rules**. Show the default connection matrix and use Aline Kamanzi (Public)
+   as sender and Aline Keza (Private) as recipient: initiation is blocked, acceptance is permitted.
+3. Open **Members & Access**, search `FL-001229`, and grant Diane a complimentary Public weekly
+   plan. Explain why this creates access without revenue. Open her profile to show saved terms.
+4. Open **Membership Payments** and simulate a Public weekly purchase for Diane with a pending
+   result. Her expiry stays unchanged. Resolve the payment successfully: seven days are added
+   after her existing expiry and revenue increases by the purchased amount.
+5. Open **Identity Verification** and approve David Mugisha’s synthetic adult case. His existing
+   paid membership now becomes usable. Review the spam case in **Reports & Safety** and suspend
+   Moses; the account restriction is visible in Members.
+6. Finish at **Statistics & Reports** to filter/export payment history, then **Audit Logs** to
+   show the decisions and reasons recorded during the demonstration.
+
+Run `npm run test:findlove` for the membership and transition tests, plus `npm run lint`,
+`npx tsc --noEmit` and `npm run build -- --webpack` for project checks.
+
+Presentation wording: “Eventis organiser plans control publishing purchases, and Eventis installments
+control how those purchases are repaid. FindLove memberships control paid access and connection
+permissions. The admin demo manages them separately; a shared backend is the next integration step.”
+
+**Integration boundary:** these controls do not change the mobile app or make real charges.
+The mobile app’s missing-expiry acceptance and inconsistent route/service checks still need their
+own follow-up changes. Production needs shared plan/configuration APIs, server-enforced access,
+payment-provider confirmation, document-review storage and staff authorization/auditing.
 
 
 ## Development tools
