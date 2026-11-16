@@ -24,6 +24,10 @@ import { Members } from "./members";
 import { Audit, Payments } from "./monitoring";
 import { Verification, Safety } from "./reviews";
 import { Metrics } from "./shared";
+import {
+  saveMembershipCommand,
+  type LiveMembershipSnapshot,
+} from "@/lib/find-love/membership-actions";
 const initial = seedMembershipDemo();
 const views = {
   overview: [
@@ -67,10 +71,13 @@ export type MembershipView = keyof typeof views;
 export function MembershipWorkspace({
   view = "overview",
   memberId,
+  initialSnapshot,
 }: {
   view?: MembershipView;
   memberId?: string;
+  initialSnapshot?: LiveMembershipSnapshot;
 }) {
+  const [liveSnapshot, setLiveSnapshot] = useState(initialSnapshot);
   const raw = useBrowserRecord(MEMBERSHIP_KEY);
   const [now, setNow] = useState(Date.parse("2026-11-10T09:00:00Z"));
   const [message, setMessage] = useState(""),
@@ -87,6 +94,7 @@ export function MembershipWorkspace({
     };
   }, []);
   const parsed = useMemo(() => {
+    if (liveSnapshot) return { state: liveSnapshot.state, valid: true };
     if (!raw) return { state: initial, valid: true };
     try {
       const state = JSON.parse(raw) as Demo;
@@ -106,9 +114,22 @@ export function MembershipWorkspace({
     } catch {
       return { state: initial, valid: false };
     }
-  }, [raw]);
-  const mutate = (command: Command): boolean => {
+  }, [raw, liveSnapshot]);
+  const mutate = async (command: Command): Promise<boolean> => {
     try {
+      if (liveSnapshot) {
+        const result = await saveMembershipCommand(
+          command,
+          liveSnapshot.revision,
+          crypto.randomUUID(),
+        );
+        if (!result.ok) throw new Error(result.error);
+        setLiveSnapshot(result.data);
+        setNow(Date.now());
+        setError("");
+        setMessage("Saved. Related screens are updated.");
+        return true;
+      }
       if (!parsed.valid)
         throw new Error(
           "Saved demo data could not be read. Reset the demo to continue.",
@@ -134,7 +155,7 @@ export function MembershipWorkspace({
       return false;
     }
   };
-  const props = { state: parsed.state, now, mutate };
+  const props = { state: parsed.state, now, mutate, live: !!liveSnapshot };
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -145,16 +166,28 @@ export function MembershipWorkspace({
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {views[view][0]}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">{views[view][1]}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {liveSnapshot && view === "audit"
+              ? "Administrative changes recorded by the backend."
+              : liveSnapshot && view === "payments"
+                ? "Record external membership payments and monitor their confirmation."
+                : views[view][1]}
+          </p>
         </div>
         <span className="rounded-full border border-primary/20 bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary">
-          Frontend demo
+          {liveSnapshot ? "Live data" : "Frontend demo"}
         </span>
       </div>
       <p className="rounded-xl border border-border bg-card p-4 text-xs leading-relaxed text-muted-foreground">
-        Saved in this browser only. Prices mirror the mobile app’s placeholder
-        catalog. Purchases, reviews and access changes are simulated; they do
-        not update mobile accounts or charge real money.
+        {liveSnapshot ? (
+          "Changes are saved to the backend. Payment entries record money received externally; they do not initiate charges."
+        ) : (
+          <>
+            Saved in this browser only. Prices mirror the mobile app’s
+            placeholder catalog. Purchases, reviews and access changes are
+            simulated; they do not update mobile accounts or charge real money.
+          </>
+        )}
       </p>
       {!parsed.valid && (
         <div
@@ -248,7 +281,7 @@ export function MembershipWorkspace({
                 href: "/find-love/verification",
                 icon: ShieldCheck,
                 title: "Verification review",
-                description: `${parsed.state.members.filter((m) => m.verification === "pending").length} synthetic cases awaiting manual review.`,
+                description: `${parsed.state.members.filter((m) => m.verification === "pending").length} ${liveSnapshot ? "cases" : "synthetic cases"} awaiting manual review.`,
               },
               {
                 href: "/find-love/settings",

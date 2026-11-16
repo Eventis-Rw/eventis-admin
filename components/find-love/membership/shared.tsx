@@ -12,8 +12,13 @@ import {
   accessReason,
   money,
 } from "@/lib/find-love/membership-demo";
-export type Mutate = (command: Command) => boolean;
-export type ViewProps = { state: Demo; now: number; mutate: Mutate };
+export type Mutate = (command: Command) => boolean | Promise<boolean>;
+export type ViewProps = {
+  live?: boolean;
+  state: Demo;
+  now: number;
+  mutate: Mutate;
+};
 export function Field({
   label,
   children,
@@ -28,15 +33,18 @@ export function Field({
     </label>
   );
 }
-export function Reason() {
+export function Reason({
+  label = "Reason for the audit log",
+  placeholder = "Explain this change…",
+}: { label?: string; placeholder?: string } = {}) {
   return (
-    <Field label="Reason for the audit log">
+    <Field label={label}>
       <Input
         name="reason"
         required
         minLength={5}
         maxLength={500}
-        placeholder="Explain this change…"
+        placeholder={placeholder}
       />
     </Field>
   );
@@ -94,7 +102,11 @@ export function Status({ value }: { value: string }) {
     </Badge>
   );
 }
-export function Metrics({ state, now }: Pick<ViewProps, "state" | "now">) {
+export function Metrics({
+  state,
+  now,
+  live,
+}: Pick<ViewProps, "state" | "now" | "live">) {
   const metrics = [
     [
       "Membership revenue",
@@ -103,7 +115,9 @@ export function Metrics({ state, now }: Pick<ViewProps, "state" | "now">) {
           .filter((p) => p.status === "success")
           .reduce((sum, p) => sum + p.amount, 0),
       ),
-      "Successful demo payments only",
+      live
+        ? "Recorded received payments only"
+        : "Successful demo payments only",
     ],
     [
       "Active memberships",

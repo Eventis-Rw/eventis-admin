@@ -88,7 +88,7 @@ export function OperationDialog({
     >
       <form
         className="space-y-4"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
           const data = new FormData(e.currentTarget);
           const val = (key: string) => String(data.get(key) ?? "");
@@ -159,7 +159,7 @@ export function OperationDialog({
               break;
           }
           if (
-            run(
+            await run(
               cmd,
               operation.kind === "notify"
                 ? "Reminder simulated and logged. No message was sent."

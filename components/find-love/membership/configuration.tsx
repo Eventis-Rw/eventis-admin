@@ -19,15 +19,21 @@ import {
   formString,
 } from "./shared";
 
-export function Plans({ state, mutate }: ViewProps) {
+export function Plans({ state, mutate, live }: ViewProps) {
   const [editing, setEditing] = useState<Plan | null>(null);
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-primary/20 bg-primary-soft p-5 text-sm leading-relaxed">
-        <strong>Aligned with the mobile catalog.</strong> These RWF prices are
-        placeholders awaiting business approval. Each purchase pays for the full
-        period. Monthly means 30 days; yearly means 365 days. Price and
-        availability changes affect future checkouts.
+        <strong>
+          {live
+            ? "Shared membership catalog."
+            : "Aligned with the mobile catalog."}
+        </strong>{" "}
+        {live
+          ? "These are the prices stored in the backend. "
+          : "These RWF prices are placeholders awaiting business approval. "}
+        Each purchase pays for the full period. Monthly means 30 days; yearly
+        means 365 days. Price and availability changes affect future checkouts.
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
         {(["public", "private"] as const).map((tier) => (
@@ -103,11 +109,11 @@ export function Plans({ state, mutate }: ViewProps) {
         {editing && (
           <form
             className="space-y-4"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               const form = e.currentTarget;
               if (
-                mutate({
+                await mutate({
                   type: "plan",
                   id: editing.id,
                   price: Number(formString(form, "price")),
@@ -149,8 +155,10 @@ export function Plans({ state, mutate }: ViewProps) {
   );
 }
 export function Rules({ state, now, mutate }: ViewProps) {
-  const [sender, setSender] = useState(state.members[1].id),
-    [target, setTarget] = useState(state.members[0].id);
+  const [sender, setSender] = useState(
+      state.members[1]?.id ?? state.members[0]?.id ?? "",
+    ),
+    [target, setTarget] = useState(state.members[0]?.id ?? "");
   const from = state.members.find((m) => m.id === sender)!,
     to = state.members.find((m) => m.id === target)!;
   return (
@@ -163,14 +171,14 @@ export function Rules({ state, now, mutate }: ViewProps) {
         <form
           key={JSON.stringify(state.permissions)}
           className="space-y-5 p-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             const data = new FormData(e.currentTarget);
             const permissions = structuredClone(state.permissions);
             for (const a of ["public", "private"] as Tier[])
               for (const b of ["public", "private"] as Tier[])
                 permissions[a][b] = data.has(`${a}-${b}`);
-            mutate({
+            await mutate({
               type: "rules",
               permissions,
               reason: String(data.get("reason")),
@@ -223,10 +231,14 @@ export function Rules({ state, now, mutate }: ViewProps) {
               </Select>
             </Field>
             <p className="rounded-xl bg-muted p-4 text-sm" role="status">
-              {connectionDecision(from, to, now)}
+              {from && to
+                ? connectionDecision(from, to, now)
+                : "Choose two members to check access."}
             </p>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              {connectionDecision(from, to, now, true)}
+              {from && to
+                ? connectionDecision(from, to, now, true)
+                : "Choose two members to check access."}
             </p>
           </div>
         </Card>

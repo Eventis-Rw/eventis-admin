@@ -6,6 +6,11 @@ import { fullName } from "@/lib/format";
 import { businessDate } from "@/lib/installments/engine";
 import { requireAdmin } from "@/lib/session";
 
+import { apiFetch } from "@/lib/api";
+import { USE_MOCK_DATA } from "@/lib/config";
+import type { LiveInstallmentSnapshot } from "@/lib/installments/actions";
+import type { LiveOrganiserCatalog } from "@/lib/eventis/organiser-catalog-actions";
+
 export const metadata: Metadata = { title: "Installments" };
 export default async function InstallmentsPage({
   searchParams,
@@ -15,6 +20,16 @@ export default async function InstallmentsPage({
   const { token, user } = await requireAdmin();
   const users = await loadUsers(token);
   if (!users.ok) return <ErrorState message={users.error} />;
+  const live = USE_MOCK_DATA
+    ? undefined
+    : await apiFetch<LiveInstallmentSnapshot>("/admin/installment-workspace", {
+        token,
+      });
+  const catalog = USE_MOCK_DATA
+    ? undefined
+    : await apiFetch<LiveOrganiserCatalog>("/admin/organiser-catalog", {
+        token,
+      });
   const params = await searchParams;
   const customers = users.data
     .filter((u) => u.role === "CUSTOMER")
@@ -26,6 +41,8 @@ export default async function InstallmentsPage({
     }));
   return (
     <InstallmentWorkspace
+      initialSnapshot={live}
+      initialCatalog={catalog}
       customers={customers}
       actor={user.displayName ?? user.phone}
       today={businessDate(new Date().toISOString())}

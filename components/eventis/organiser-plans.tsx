@@ -22,6 +22,11 @@ import {
   type PlanInterval,
 } from "@/lib/organiser-plans";
 
+import {
+  saveOrganiserCatalog,
+  type LiveOrganiserCatalog,
+} from "@/lib/eventis/organiser-catalog-actions";
+
 const CHANGE_EVENT = "eventis-organiser-plans-change";
 const textAreaClass =
   "min-h-24 w-full rounded-xl border border-border bg-input px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring";
@@ -54,11 +59,17 @@ function subscribe(listener: () => void) {
 }
 const serverSnapshot = () => null;
 
-export function OrganiserPlans() {
+export function OrganiserPlans({
+  initialCatalog,
+}: {
+  initialCatalog?: LiveOrganiserCatalog;
+}) {
+  const [liveCatalog, setLiveCatalog] = useState(initialCatalog);
   const raw = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const loaded = useMemo(() => {
+    if (liveCatalog) return { catalog: liveCatalog, invalid: false };
     if (!raw) return { catalog: defaultOrganiserCatalog(), invalid: false };
     try {
       const catalog: OrganiserCatalog = JSON.parse(raw);
@@ -67,17 +78,26 @@ export function OrganiserPlans() {
     } catch {
       return { catalog: defaultOrganiserCatalog(), invalid: true };
     }
-  }, [raw]);
-  const save = (catalog: OrganiserCatalog) => {
+  }, [raw, liveCatalog]);
+  const save = async (catalog: OrganiserCatalog) => {
     setMessage("");
     setError("");
     try {
       validateOrganiserCatalog(catalog);
-      localStorage.setItem(
-        ORGANISER_PLANS_STORAGE_KEY,
-        JSON.stringify(catalog),
-      );
-      window.dispatchEvent(new Event(CHANGE_EVENT));
+      if (liveCatalog) {
+        const result = await saveOrganiserCatalog({
+          ...catalog,
+          revision: liveCatalog.revision,
+        });
+        if (!result.ok) throw new Error(result.error);
+        setLiveCatalog(result.data);
+      } else {
+        localStorage.setItem(
+          ORGANISER_PLANS_STORAGE_KEY,
+          JSON.stringify(catalog),
+        );
+        window.dispatchEvent(new Event(CHANGE_EVENT));
+      }
       setMessage(
         "Plans saved. The new prices and availability apply to all organiser purchases in this preview.",
       );
@@ -112,9 +132,15 @@ export function OrganiserPlans() {
         </Link>
       </header>
       <p className="rounded-xl border border-primary/10 bg-info-soft px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-        Frontend demo · Settings are saved in this browser and used by the
-        organiser checkout preview. The mobile app keeps its current prices
-        until connected to these settings.
+        {liveCatalog ? (
+          "Plan settings are saved centrally in the backend and used by this checkout preview."
+        ) : (
+          <>
+            Frontend demo · Settings are saved in this browser and used by the
+            organiser checkout preview. The mobile app keeps its current prices
+            until connected to these settings.
+          </>
+        )}
       </p>
       {loaded.invalid && (
         <p role="alert" className="rounded-xl bg-warning-soft p-3 text-sm">
@@ -136,7 +162,7 @@ export function OrganiserPlans() {
         </p>
       )}
       <CatalogEditor
-        key={raw ?? "default"}
+        key={liveCatalog ? JSON.stringify(liveCatalog) : (raw ?? "default")}
         initial={loaded.catalog}
         onSave={save}
       />

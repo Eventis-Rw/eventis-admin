@@ -54,7 +54,7 @@ function exportPayments(payments: Payment[], names: Map<string, string>) {
   link.click();
   URL.revokeObjectURL(url);
 }
-export function Payments({ state, mutate }: ViewProps) {
+export function Payments({ state, mutate, live }: ViewProps) {
   const [checkout, setCheckout] = useState(false),
     [resolving, setResolving] = useState<Payment | null>(null);
   const [query, setQuery] = useState(""),
@@ -78,9 +78,15 @@ export function Payments({ state, mutate }: ViewProps) {
       <Card>
         <CardHeader
           title="Full-period membership payments"
-          description="Simulate checkout outcomes. Successful payments activate or renew access; pending and failed payments do not grant access."
+          description={
+            live
+              ? "Record external payments. Successful receipts activate or renew access; pending and failed entries do not grant access."
+              : "Simulate checkout outcomes. Successful payments activate or renew access; pending and failed payments do not grant access."
+          }
           action={
-            <Button onClick={() => setCheckout(true)}>Simulate purchase</Button>
+            <Button onClick={() => setCheckout(true)}>
+              {live ? "Record payment" : "Simulate purchase"}
+            </Button>
           }
         />
         <div className="grid gap-3 p-5 md:grid-cols-3">
@@ -210,16 +216,22 @@ export function Payments({ state, mutate }: ViewProps) {
       <Dialog
         open={checkout}
         onClose={() => setCheckout(false)}
-        title="Simulate membership purchase"
-        description="Demo only. No charge is sent to a payment provider."
+        title={
+          live ? "Record membership payment" : "Simulate membership purchase"
+        }
+        description={
+          live
+            ? "Record a payment received through an external channel. This action does not charge the customer."
+            : "Demo only. No charge is sent to a payment provider."
+        }
       >
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             const form = e.currentTarget;
             if (
-              mutate({
+              await mutate({
                 type: "checkout",
                 id: formString(form, "member"),
                 planId: formString(form, "planId"),
@@ -245,7 +257,11 @@ export function Payments({ state, mutate }: ViewProps) {
               <option>Airtel Money</option>
             </Select>
           </Field>
-          <Field label="Simulated provider result">
+          <Field
+            label={
+              live ? "Recorded payment status" : "Simulated provider result"
+            }
+          >
             <Select name="outcome">
               <option value="success">Successful</option>
               <option value="pending">Pending confirmation</option>
@@ -257,49 +273,58 @@ export function Payments({ state, mutate }: ViewProps) {
             grant is available under Members. Revoke an active membership before
             switching tiers.
           </p>
-          <Reason />
+          <Reason
+            label={live ? "Transaction reference" : undefined}
+            placeholder={
+              live ? "Reference from the external payment" : undefined
+            }
+          />
           <Button type="submit" disabled={!state.plans.some((p) => p.active)}>
-            Run demo checkout
+            {live ? "Record payment" : "Run demo checkout"}
           </Button>
         </form>
       </Dialog>
       <Dialog
         open={!!resolving}
         onClose={() => setResolving(null)}
-        title="Resolve pending payment"
+        title={live ? "Confirm external payment" : "Resolve pending payment"}
         description="Uses the price and rules saved when checkout started."
       >
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             if (
               resolving &&
-              mutate({
+              (await mutate({
                 type: "settle",
                 id: resolving.id,
                 outcome: formString(e.currentTarget, "outcome") as
                   "success" | "failed",
                 reason: formString(e.currentTarget, "reason"),
-              })
+              }))
             )
               setResolving(null);
           }}
         >
-          <Field label="Final provider outcome">
+          <Field
+            label={live ? "Confirmed payment status" : "Final provider outcome"}
+          >
             <Select name="outcome">
               <option value="success">Successful</option>
               <option value="failed">Failed</option>
             </Select>
           </Field>
           <Reason />
-          <Button type="submit">Confirm demo result</Button>
+          <Button type="submit">
+            {live ? "Confirm payment status" : "Confirm demo result"}
+          </Button>
         </form>
       </Dialog>
     </div>
   );
 }
-export function Audit({ state }: ViewProps) {
+export function Audit({ state, live }: ViewProps) {
   const [search, setSearch] = useState("");
   const logs = state.audit.filter((e) =>
     `${e.action} ${e.target} ${e.reason}`
@@ -309,8 +334,12 @@ export function Audit({ state }: ViewProps) {
   return (
     <Card>
       <CardHeader
-        title="Demo activity log"
-        description="Changes made in this browser, recorded as Demo Admin. This local log is editable browser data, not a production compliance record."
+        title={live ? "Activity log" : "Demo activity log"}
+        description={
+          live
+            ? "Administrative actions stored by the backend, with actor, timestamp and reason."
+            : "Changes made in this browser, recorded as Demo Admin. This local log is editable browser data, not a production compliance record."
+        }
       />
       <div className="p-5">
         <SearchInput
@@ -338,7 +367,7 @@ export function Audit({ state }: ViewProps) {
                   timeZone: "Africa/Kigali",
                 })}
               </Td>
-              <Td>Demo Admin</Td>
+              <Td>{entry.actorName ?? "Demo Admin"}</Td>
               <Td>
                 {entry.action}
                 {entry.details && (

@@ -185,11 +185,11 @@ export function Members({
         {selected && (
           <form
             className="space-y-4"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               const form = e.currentTarget;
               if (
-                mutate({
+                await mutate({
                   type: "member",
                   id: selected.id,
                   action,
