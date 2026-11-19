@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { ApiError, apiFetch } from "@/lib/api";
 import { ACCESS_COOKIE, USE_MOCK_DATA } from "@/lib/config";
+import { loadConsoleAccess } from "@/lib/eventis/console-access";
 import { MOCK_ADMIN } from "@/lib/mock/data";
 import { can, isAdmin, type Permission } from "@/lib/permissions";
 import type { SessionUser } from "@/types";
@@ -37,6 +38,7 @@ export async function requireAdmin(): Promise<Session> {
 
 export async function requirePermission(permission: Permission): Promise<Session> {
   const session = await requireAdmin();
-  if (!can(session.user, permission)) throw new ApiError("Permission denied", 403, "FORBIDDEN");
+  const access = await loadConsoleAccess(session.token);
+  if (!can(session.user, permission) || (access && !access.unrestricted && !access.permissions.some((entry) => entry === permission))) throw new ApiError("Permission denied", 403, "FORBIDDEN");
   return session;
 }

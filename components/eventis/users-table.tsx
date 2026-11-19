@@ -20,10 +20,11 @@ interface Props {
   users: AdminUser[];
   currentUserId: string;
   canManage: boolean;
+  canManageAdmins: boolean;
   eventCounts: Record<string, number>;
 }
 
-export function UsersTable({ users, currentUserId, canManage, eventCounts }: Props) {
+export function UsersTable({ users, currentUserId, canManage, canManageAdmins, eventCounts }: Props) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [type, setType] = useState("all");
@@ -145,7 +146,7 @@ export function UsersTable({ users, currentUserId, canManage, eventCounts }: Pro
         title={selected ? fullName(selected) : ""}
         description={selected ? `User ID ${selected.id}` : undefined}
         footer={
-          selected && canManage ? (
+          selected && canManage && (selected.role !== "ADMIN" || canManageAdmins) ? (
             selected.status === "ACTIVE" ? (
               <Button variant="destructive" disabled={isSelf} onClick={() => setConfirm("suspend")} title={isSelf ? "You cannot suspend your own account" : undefined}>
                 <UserX className="h-4 w-4" /> Suspend account

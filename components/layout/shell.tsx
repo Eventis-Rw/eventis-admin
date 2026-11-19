@@ -22,6 +22,18 @@ import { Button } from "@/components/ui/button";
 import { platformForPath, platforms, type Platform } from "@/lib/platforms";
 import { cn } from "@/lib/utils";
 
+import { type ConsoleAccess, type ConsolePermission, type PublicEventisSettings } from "@/lib/eventis/console-settings";
+
+const eventisAccess: Record<string, ConsolePermission[]> = {
+  "/eventis/users": ["users:read"],
+  "/eventis/events": ["events:read"],
+  "/eventis/plans": ["catalog:manage"],
+  "/eventis/installments": ["users:read", "catalog:manage", "installments:manage"],
+  "/eventis/organisers": ["users:read", "organisers:verify", "promotions:manage", "subscriptions:activate"],
+  "/eventis/moderation": ["reports:manage"],
+  "/eventis/audit": ["audit:read"],
+};
+
 interface ShellUser {
   name: string;
   phone: string;
@@ -31,14 +43,28 @@ interface ShellUser {
 export function ConsoleShell({
   user,
   mock,
+  consoleAccess,
+  eventisSettings,
   children,
 }: {
   user: ShellUser;
   mock: boolean;
+  consoleAccess: ConsoleAccess | null;
+  eventisSettings: PublicEventisSettings | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const platform = platformForPath(pathname);
+  const platformName = platform.id === "eventis" ? eventisSettings?.displayName ?? platform.name : platform.name;
+  const navigation = platform.nav.filter((item) => {
+    if (!consoleAccess || consoleAccess.unrestricted) return true;
+    if (platform.id === "find-love") return consoleAccess.permissions.includes("findlove:manage");
+    const required = eventisAccess[item.href];
+    if (!required) return item.href !== "/eventis/bookings";
+    return item.href === "/eventis/installments"
+      ? required.every((permission) => consoleAccess.permissions.includes(permission))
+      : required.some((permission) => consoleAccess.permissions.includes(permission));
+  });
   const [openAt, setOpenAt] = useState<string | null>(null);
   const menuOpen = openAt === pathname;
   const setMenuOpen = (open: boolean) => setOpenAt(open ? pathname : null);
@@ -111,10 +137,10 @@ export function ConsoleShell({
         <PlatformSwitcher platform={platform} />
 
         <nav
-          aria-label={`${platform.name} navigation`}
+          aria-label={`${platformName} navigation`}
           className="mt-4 flex-1 space-y-0.5 overflow-y-auto"
         >
-          {platform.nav.map((item) => {
+          {navigation.map((item) => {
             const active = current.href === item.href;
             const Icon = item.icon;
             return (
@@ -178,7 +204,7 @@ export function ConsoleShell({
             </Button>
             <div className="min-w-0">
               <p className="text-xs font-medium text-muted-foreground">
-                {platform.name}
+                {platformName}
               </p>
               <h1 className="truncate text-lg font-bold leading-tight sm:text-xl">
                 {current.label}
@@ -215,7 +241,17 @@ export function ConsoleShell({
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-7 sm:px-7 lg:px-8">{children}</main>
+        <main className="flex-1 px-4 py-7 sm:px-7 lg:px-8">
+          {!findLove && eventisSettings?.announcement ? (
+            <p className="mb-5 rounded-xl border border-border bg-surface p-4 text-sm">{eventisSettings.announcement}</p>
+          ) : null}
+          {children}
+          {!findLove && eventisSettings?.supportEmail ? (
+            <p className="mt-6 text-sm text-muted-foreground">
+              Support <a className="text-primary underline" href={`mailto:${eventisSettings.supportEmail}`}>{eventisSettings.supportEmail}</a>
+            </p>
+          ) : null}
+        </main>
       </div>
     </div>
   );

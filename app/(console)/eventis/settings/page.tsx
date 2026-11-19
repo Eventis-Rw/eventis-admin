@@ -1,70 +1,38 @@
 import type { Metadata } from "next";
-
-import { Badge } from "@/components/ui/badge";
+import { ConsoleRolesPanel, EventisSettingsPanel } from "@/components/eventis/console-settings-panel";
 import { Card, CardHeader } from "@/components/ui/card";
-import { API_BASE_URL } from "@/lib/config";
-import { fmtDateTime } from "@/lib/format";
-import { rolePermissions, type Permission } from "@/lib/permissions";
+import { ErrorState } from "@/components/ui/states";
+import { apiFetch, toResult } from "@/lib/api";
+import { USE_MOCK_DATA } from "@/lib/config";
+import { loadConsoleAccess } from "@/lib/eventis/console-access";
+import type { ConsoleRoles, EventisSettings } from "@/lib/eventis/console-settings";
 import { requireAdmin } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Settings" };
-
-const ALL: { key: Permission; label: string }[] = [
-  { key: "users:read", label: "View users" },
-  { key: "users:manage", label: "Suspend / reactivate users" },
-  { key: "events:read", label: "View events" },
-  { key: "organisers:read", label: "View organisers" },
-];
+export const metadata: Metadata = { title: "Settings & roles" };
 
 export default async function SettingsPage() {
-  const { user } = await requireAdmin();
-  let apiHost = "unknown";
-  try {
-    apiHost = new URL(API_BASE_URL).host;
-  } catch {}
+  const { user, token } = await requireAdmin();
+  const access = await loadConsoleAccess(token);
+  if (!access) return <ErrorState message="Unable to load console permissions." />;
+  const [settings, roles] = await Promise.all([
+    !USE_MOCK_DATA && (access.unrestricted || access.permissions.includes("settings:manage"))
+      ? toResult(() => apiFetch<EventisSettings>("/admin/eventis/settings", { token })) : null,
+    !USE_MOCK_DATA && access.unrestricted
+      ? toResult(() => apiFetch<ConsoleRoles>("/admin/console-roles", { token })) : null,
+  ]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-5">
       <Card>
-        <CardHeader title="Your session" description="Verified with the API on every request" />
-        <dl className="grid grid-cols-[120px_1fr] gap-3 p-5 text-sm">
-          <dt className="text-muted-foreground">Name</dt>
-          <dd className="font-medium">{user.displayName ?? "—"}</dd>
-          <dt className="text-muted-foreground">Phone</dt>
-          <dd className="font-medium">{user.phone}</dd>
-          <dt className="text-muted-foreground">Roles</dt>
-          <dd className="flex flex-wrap gap-1">{user.roles.map((role) => <Badge key={role} tone="info">{role}</Badge>)}</dd>
-          <dt className="text-muted-foreground">Account created</dt>
-          <dd className="font-medium">{fmtDateTime(user.createdAt)}</dd>
-          <dt className="text-muted-foreground">API host</dt>
-          <dd className="font-medium">{apiHost}</dd>
-        </dl>
-      </Card>
-
-      <Card>
-        <CardHeader title="Roles & permissions" description="Console policy. The API remains the source of truth." />
-        <div className="overflow-x-auto p-5">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="pb-2 font-semibold">Permission</th>
-                {Object.keys(rolePermissions).map((role) => <th key={role} className="pb-2 font-semibold capitalize">{role}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {ALL.map(({ key, label }) => (
-                <tr key={key} className="border-t border-border">
-                  <td className="py-2">{label}</td>
-                  {Object.values(rolePermissions).map((perms, index) => <td key={index} className="py-2">{perms.includes(key) ? "Allowed" : "—"}</td>)}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="mt-4 text-xs text-muted-foreground">
-            The backend has a single privileged role (admin). Custom roles, role assignment and platform settings need new API endpoints.
-          </p>
+        <CardHeader title="Your session" />
+        <div className="space-y-1 p-5 text-sm">
+          <p className="font-semibold">{user.displayName || user.phone}</p>
+          <p className="text-muted-foreground">{access.unrestricted ? "Unrestricted administrator" : "Custom console role"}</p>
         </div>
       </Card>
+      {USE_MOCK_DATA ? <p className="text-sm text-muted-foreground">Global settings and console roles are available in API mode.</p> : null}
+      {settings?.ok ? <EventisSettingsPanel settings={settings.data} /> : settings ? <ErrorState message={settings.error} /> : null}
+      {roles?.ok ? <ConsoleRolesPanel data={roles.data} actorId={user.id} /> : roles ? <ErrorState message={roles.error} /> : null}
     </div>
   );
 }
