@@ -43,6 +43,10 @@ import {
 } from "./forms";
 import { OperationDialog, type Operation } from "./operation-dialog";
 
+import {
+  saveInstallmentCommand,
+  type LiveInstallmentSnapshot,
+} from "@/lib/installments/actions";
 const tabs = [
   "Overview",
   "Repayment plans",
@@ -90,13 +94,18 @@ export function InstallmentWorkspace({
   today,
   productId,
   quantity,
+  initialSnapshot,
+  initialCatalog,
 }: {
   customers: Customer[];
   actor: string;
   today: string;
   productId?: string;
   quantity: number;
+  initialSnapshot?: LiveInstallmentSnapshot;
+  initialCatalog?: OrganiserCatalog;
 }) {
+  const [liveSnapshot, setLiveSnapshot] = useState(initialSnapshot);
   const raw = useBrowserRecord(INSTALLMENTS_STORAGE_KEY);
   const catalogRaw = useBrowserRecord(
     ORGANISER_PLANS_STORAGE_KEY,
@@ -104,6 +113,7 @@ export function InstallmentWorkspace({
   );
   const loaded = useMemo(() => {
     try {
+      if (liveSnapshot) return { store: liveSnapshot.state, error: "" };
       return { store: parseInstallmentStore(raw), error: "" };
     } catch {
       return {
@@ -112,9 +122,10 @@ export function InstallmentWorkspace({
           "Saved installment records could not be loaded. Existing browser data has been preserved; changes are blocked until it can be recovered.",
       };
     }
-  }, [raw]);
+  }, [raw, liveSnapshot]);
   const catalogData = useMemo(() => {
     try {
+      if (initialCatalog) return { catalog: initialCatalog, error: "" };
       return { catalog: readCatalog(catalogRaw), error: "" };
     } catch {
       return {
@@ -123,7 +134,7 @@ export function InstallmentWorkspace({
           "Saved organiser pricing could not be loaded. Correct it in Plans & pricing before assigning a product.",
       };
     }
-  }, [catalogRaw]);
+  }, [catalogRaw, initialCatalog]);
   const store = loaded.store;
   const catalog = catalogData.catalog;
   const [tab, setTab] = useState<Tab>(
@@ -144,11 +155,22 @@ export function InstallmentWorkspace({
   const customerName = (id: string) =>
     customers.find((c) => c.id === id)?.name ?? id;
   const aFor = (id: string) => store.agreements.find((a) => a.id === id)!;
-  const run: Run = (command, success) => {
+  const run: Run = async (command, success) => {
     setError("");
     setMessage("");
     try {
       check(!loaded.error, loaded.error);
+      if (liveSnapshot) {
+        const result = await saveInstallmentCommand(
+          command,
+          liveSnapshot.revision,
+          crypto.randomUUID(),
+        );
+        if (!result.ok) throw new Error(result.error);
+        setLiveSnapshot(result.data);
+        setMessage(success);
+        return true;
+      }
       const latest = parseInstallmentStore(
         localStorage.getItem(INSTALLMENTS_STORAGE_KEY),
       );
@@ -449,9 +471,16 @@ export function InstallmentWorkspace({
         </div>
       </header>
       <p className="rounded-xl border border-primary/10 bg-info-soft px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-        Frontend demo · Records are saved in this browser. Payments and refunds
-        do not transfer funds; SMS and email reminders are simulated. Organiser
-        pricing and repayment terms are separate settings.
+        {liveSnapshot ? (
+          "Records are saved to the backend. Payments and refunds record external transactions without initiating transfers. Reminders remain pending until delivery is confirmed."
+        ) : (
+          <>
+            Frontend demo · Records are saved in this browser. Payments and
+            refunds do not transfer funds; SMS and email reminders are
+            simulated. Organiser pricing and repayment terms are separate
+            settings.
+          </>
+        )}
       </p>
       {loaded.error && (
         <p
@@ -1094,7 +1123,11 @@ export function InstallmentWorkspace({
                 </tbody>
               </Table>
             ) : (
-              <Empty>No reminders simulated yet.</Empty>
+              <Empty>
+                {liveSnapshot
+                  ? "No reminder requests yet."
+                  : "No reminders simulated yet."}
+              </Empty>
             )}
           </Card>
         </>

@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import {
-  CheckCircle2,
-  Edit2,
-  Send,
-} from "lucide-react";
+import { sendNotificationPreviewAction } from "@/lib/find-love/actions";
+import { useState, useTransition } from "react";
+import { CheckCircle2, Edit2, Send } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,14 +11,27 @@ import { Dialog } from "@/components/ui/overlay";
 import { Table, Td, Th } from "@/components/ui/table";
 import type { NotificationTemplate } from "@/lib/find-love/types";
 
-export function NotificationsView({ templates: initialTemplates }: { templates: NotificationTemplate[] }) {
+export function NotificationsView({
+  templates: initialTemplates,
+  stats,
+}: {
+  templates: NotificationTemplate[];
+  stats?: { sent: number; deliveryRate: string; reminders: number };
+}) {
   const [templates] = useState<NotificationTemplate[]>(initialTemplates);
-  const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<NotificationTemplate | null>(null);
   const [testSent, setTestSent] = useState(false);
 
+  const [feedback, setFeedback] = useState("");
+  const [pending, startTransition] = useTransition();
   const handleSendTest = () => {
-    setTestSent(true);
-    setTimeout(() => setTestSent(false), 3000);
+    if (!selectedTemplate) return;
+    startTransition(async () => {
+      const result = await sendNotificationPreviewAction(selectedTemplate.id);
+      setFeedback(result.message);
+      setTestSent(result.success);
+    });
   };
 
   return (
@@ -29,24 +39,56 @@ export function NotificationsView({ templates: initialTemplates }: { templates: 
       {/* Top Stat Bar */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Notifications Sent (30d)</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">12,852</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Across Push, SMS & In-app</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Notifications Sent (30d)
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+            {stats ? stats.sent.toLocaleString() : "12,852"}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {stats
+              ? "Saved to member in-app inboxes"
+              : "Across Push, SMS & In-app"}
+          </p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Delivery Success Rate</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-success">98.4%</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Aggregator confirmed delivery</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Delivery Success Rate
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-success">
+            {stats ? stats.deliveryRate : "98.4%"}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {stats
+              ? "Provider delivery confirmation is not configured"
+              : "Aggregator confirmed delivery"}
+          </p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Active Templates</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">{templates.length}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Standard automated triggers</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Active Templates
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+            {stats
+              ? templates.filter((t) => t.status === "active").length
+              : templates.length}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Standard automated triggers
+          </p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Installment Reminders</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-primary">1,420</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Sent 3 days before due</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Installment Reminders
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-primary">
+            {stats ? stats.reminders.toLocaleString() : "1,420"}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {stats
+              ? "Automatic reminder dispatch is not configured"
+              : "Sent 3 days before due"}
+          </p>
         </Card>
       </section>
 
@@ -73,7 +115,9 @@ export function NotificationsView({ templates: initialTemplates }: { templates: 
               <tr key={tpl.id} className="hover:bg-muted/30 transition-colors">
                 <Td className="font-semibold text-foreground">{tpl.name}</Td>
                 <Td className="text-xs text-muted-foreground">{tpl.trigger}</Td>
-                <Td className="text-xs text-muted-foreground">{tpl.audience}</Td>
+                <Td className="text-xs text-muted-foreground">
+                  {tpl.audience}
+                </Td>
                 <Td>
                   <div className="flex flex-wrap gap-1">
                     {tpl.channels.map((ch) => (
@@ -84,7 +128,10 @@ export function NotificationsView({ templates: initialTemplates }: { templates: 
                   </div>
                 </Td>
                 <Td>
-                  <Badge tone={tpl.status === "active" ? "success" : "neutral"} dot>
+                  <Badge
+                    tone={tpl.status === "active" ? "success" : "neutral"}
+                    dot
+                  >
                     {tpl.status}
                   </Badge>
                 </Td>
@@ -92,7 +139,16 @@ export function NotificationsView({ templates: initialTemplates }: { templates: 
                   {tpl.deliveredRate}
                 </Td>
                 <Td className="text-right">
-                  <Button variant="secondary" size="sm" className="h-8 text-xs" onClick={() => setSelectedTemplate(tpl)}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => {
+                      setSelectedTemplate(tpl);
+                      setTestSent(false);
+                      setFeedback("");
+                    }}
+                  >
                     <Edit2 className="h-3 w-3" /> Preview & Edit
                   </Button>
                 </Td>
@@ -112,28 +168,49 @@ export function NotificationsView({ templates: initialTemplates }: { templates: 
         >
           <div className="space-y-4 pt-2">
             <div>
-              <label className="block text-xs font-semibold text-foreground">Message Content (Supports dynamic tokens)</label>
+              <label className="block text-xs font-semibold text-foreground">
+                Message Content (Supports dynamic tokens)
+              </label>
               <div className="mt-1 rounded-xl border border-border bg-surface p-4 text-xs font-mono leading-relaxed text-foreground">
                 {selectedTemplate.content}
               </div>
             </div>
 
             <div className="rounded-xl border border-border bg-card p-3 text-xs space-y-1">
-              <p><strong>Available Placeholders:</strong></p>
-              <p className="text-muted-foreground font-mono text-[11px]">{"{amount}"}, {"{due_date}"}, {"{user_name}"}, {"{reason}"}, {"{plan_title}"}</p>
+              <p>
+                <strong>Available Placeholders:</strong>
+              </p>
+              <p className="text-muted-foreground font-mono text-[11px]">
+                {"{amount}"}, {"{due_date}"}, {"{user_name}"}, {"{reason}"},{" "}
+                {"{plan_title}"}
+              </p>
             </div>
 
+            {feedback && !testSent && (
+              <p role="alert" className="text-sm text-destructive">
+                {feedback}
+              </p>
+            )}
             {testSent && (
               <div className="rounded-xl bg-success-soft p-3 text-xs text-success flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" /> Test notification dispatched to admin preview device.
+                <CheckCircle2 className="h-4 w-4" /> {feedback}
               </div>
             )}
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
-              <Button variant="secondary" size="sm" onClick={handleSendTest}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleSendTest}
+                disabled={pending}
+              >
                 <Send className="h-3 w-3" /> Send Test Preview
               </Button>
-              <Button variant="primary" size="sm" onClick={() => setSelectedTemplate(null)}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setSelectedTemplate(null)}
+              >
                 Done
               </Button>
             </div>

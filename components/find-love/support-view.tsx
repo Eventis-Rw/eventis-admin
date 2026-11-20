@@ -2,12 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import {
-  CheckCircle2,
-  Search,
-  Send,
-  Shield,
-} from "lucide-react";
+import { CheckCircle2, Search, Send, Shield } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,19 +10,32 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Drawer } from "@/components/ui/overlay";
 import { Table, Td, Th } from "@/components/ui/table";
 import { updateSupportTicketAction } from "@/lib/find-love/actions";
-import type { SupportTicket, TicketPriority, TicketStatus } from "@/lib/find-love/types";
+import type {
+  SupportTicket,
+  TicketPriority,
+  TicketStatus,
+} from "@/lib/find-love/types";
 
 interface SupportViewProps {
   tickets: SupportTicket[];
+  live?: boolean;
 }
 
-export function SupportView({ tickets: initialTickets }: SupportViewProps) {
+export function SupportView({
+  tickets: initialTickets,
+  live,
+}: SupportViewProps) {
   const [tickets, setTickets] = useState<SupportTicket[]>(initialTickets);
-  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(
+    null,
+  );
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "all">("all");
-  const [priorityFilter, setPriorityFilter] = useState<TicketPriority | "all">("all");
+  const [priorityFilter, setPriorityFilter] = useState<TicketPriority | "all">(
+    "all",
+  );
   const [search, setSearch] = useState("");
 
+  const [error, setError] = useState("");
   // Drawer reply & note state
   const [replyText, setReplyText] = useState("");
   const [noteText, setNoteText] = useState("");
@@ -35,7 +43,9 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
 
   const openTickets = tickets.filter((t) => t.status === "open").length;
   const inProgress = tickets.filter((t) => t.status === "in_progress").length;
-  const highPriority = tickets.filter((t) => t.priority === "high" || t.priority === "urgent").length;
+  const highPriority = tickets.filter(
+    (t) => t.priority === "high" || t.priority === "urgent",
+  ).length;
 
   const filtered = tickets.filter((t) => {
     if (statusFilter !== "all" && t.status !== statusFilter) return false;
@@ -63,6 +73,11 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
       formData.set("actor", "Support Agent");
 
       const res = await updateSupportTicketAction(formData);
+      if (!res.success) {
+        setError(res.error ?? "Could not update ticket");
+        return;
+      }
+      setError("");
       if (res.success) {
         const newMsg = {
           id: `msg_${Date.now()}`,
@@ -71,9 +86,14 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
           content: replyText,
           timestamp: new Date().toISOString(),
         };
-        const updated = { ...selectedTicket, messages: [...selectedTicket.messages, newMsg] };
+        const updated = ("ticket" in res ? res.ticket : undefined) ?? {
+          ...selectedTicket,
+          messages: [...selectedTicket.messages, newMsg],
+        };
         setSelectedTicket(updated);
-        setTickets((prev) => prev.map((t) => (t.id === selectedTicket.id ? updated : t)));
+        setTickets((prev) =>
+          prev.map((t) => (t.id === selectedTicket.id ? updated : t)),
+        );
         setReplyText("");
       }
     });
@@ -90,6 +110,11 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
       formData.set("actor", "Admin Tester");
 
       const res = await updateSupportTicketAction(formData);
+      if (!res.success) {
+        setError(res.error ?? "Could not update ticket");
+        return;
+      }
+      setError("");
       if (res.success) {
         const newNote = {
           id: `note_${Date.now()}`,
@@ -97,9 +122,14 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
           note: noteText,
           timestamp: new Date().toISOString(),
         };
-        const updated = { ...selectedTicket, internalNotes: [...selectedTicket.internalNotes, newNote] };
+        const updated = ("ticket" in res ? res.ticket : undefined) ?? {
+          ...selectedTicket,
+          internalNotes: [...selectedTicket.internalNotes, newNote],
+        };
         setSelectedTicket(updated);
-        setTickets((prev) => prev.map((t) => (t.id === selectedTicket.id ? updated : t)));
+        setTickets((prev) =>
+          prev.map((t) => (t.id === selectedTicket.id ? updated : t)),
+        );
         setNoteText("");
       }
     });
@@ -111,36 +141,77 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
       const formData = new FormData();
       formData.set("ticketId", selectedTicket.id);
       formData.set("status", newStatus);
-      await updateSupportTicketAction(formData);
-      const updated = { ...selectedTicket, status: newStatus };
+      const res = await updateSupportTicketAction(formData);
+      if (!res.success) {
+        setError(res.error ?? "Could not update ticket");
+        return;
+      }
+      setError("");
+      const updated = ("ticket" in res ? res.ticket : undefined) ?? {
+        ...selectedTicket,
+        status: newStatus,
+      };
       setSelectedTicket(updated);
-      setTickets((prev) => prev.map((t) => (t.id === selectedTicket.id ? updated : t)));
+      setTickets((prev) =>
+        prev.map((t) => (t.id === selectedTicket.id ? updated : t)),
+      );
     });
   };
 
   return (
     <div className="space-y-6">
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
       {/* Top Stat Bar */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Open Tickets</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-warning">{openTickets}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Awaiting agent response</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Open Tickets
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-warning">
+            {openTickets}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Awaiting agent response
+          </p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">In Progress</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">{inProgress}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Assigned & actively handled</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            In Progress
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+            {inProgress}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Assigned & actively handled
+          </p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">High Priority Escalations</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-destructive">{highPriority}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Safety / Payment disputes</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            High Priority Escalations
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-destructive">
+            {highPriority}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Safety / Payment disputes
+          </p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Avg. First Response Time</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">14 min</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">SLA target is under 30m</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Avg. First Response Time
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+            {live ? "N/A" : "14 min"}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {live
+              ? "Response metrics are not yet collected"
+              : "SLA target is under 30m"}
+          </p>
         </Card>
       </section>
 
@@ -148,8 +219,14 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
       <div className="flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary-soft p-4 text-xs text-foreground">
         <Shield className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         <div>
-          <p className="font-semibold text-primary">Separation of Customer Support and Private Dating Messages</p>
-          Customer support tickets are strictly separate from user-to-user dating chats. Administrators cannot browse private dating messages on general dashboard screens. Access to message content is strictly limited to authorized safety investigations with an immutable audit log.
+          <p className="font-semibold text-primary">
+            Separation of Customer Support and Private Dating Messages
+          </p>
+          Customer support tickets are strictly separate from user-to-user
+          dating chats. Administrators cannot browse private dating messages on
+          general dashboard screens. Access to message content is strictly
+          limited to authorized safety investigations with an immutable audit
+          log.
         </div>
       </div>
 
@@ -170,7 +247,9 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
           <div className="flex items-center gap-2">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as TicketStatus | "all")}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as TicketStatus | "all")
+              }
               className="h-10 rounded-xl border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               <option value="all">Status: All</option>
@@ -181,7 +260,9 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
 
             <select
               value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value as TicketPriority | "all")}
+              onChange={(e) =>
+                setPriorityFilter(e.target.value as TicketPriority | "all")
+              }
               className="h-10 rounded-xl border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               <option value="all">Priority: All</option>
@@ -217,24 +298,37 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
           <tbody>
             {filtered.map((t) => (
               <tr key={t.id} className="hover:bg-muted/30 transition-colors">
-                <Td className="font-mono text-xs font-semibold">{t.ticketNumber}</Td>
-                <Td className="font-medium text-foreground max-w-xs truncate">{t.subject}</Td>
+                <Td className="font-mono text-xs font-semibold">
+                  {t.ticketNumber}
+                </Td>
+                <Td className="font-medium text-foreground max-w-xs truncate">
+                  {t.subject}
+                </Td>
                 <Td>
-                  <Link href={`/find-love/users/${t.userId}`} className="font-semibold text-foreground hover:text-primary">
+                  <Link
+                    href={`/find-love/users/${t.userId}`}
+                    className="font-semibold text-foreground hover:text-primary"
+                  >
                     {t.userName}
                   </Link>
-                  <span className="block font-mono text-[10px] text-muted-foreground">{t.userId}</span>
+                  <span className="block font-mono text-[10px] text-muted-foreground">
+                    {t.userId}
+                  </span>
                 </Td>
-                <Td className="text-xs text-muted-foreground capitalize">{t.category.replace("_", " ")}</Td>
-                <Td className="text-xs font-medium text-foreground">{t.assignedTo || "Unassigned"}</Td>
+                <Td className="text-xs text-muted-foreground capitalize">
+                  {t.category.replace("_", " ")}
+                </Td>
+                <Td className="text-xs font-medium text-foreground">
+                  {t.assignedTo || "Unassigned"}
+                </Td>
                 <Td>
                   <Badge
                     tone={
                       t.priority === "urgent" || t.priority === "high"
                         ? "danger"
                         : t.priority === "normal"
-                        ? "neutral"
-                        : "info"
+                          ? "neutral"
+                          : "info"
                     }
                   >
                     {t.priority}
@@ -246,10 +340,10 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
                       t.status === "open"
                         ? "warning"
                         : t.status === "in_progress"
-                        ? "info"
-                        : t.status === "resolved"
-                        ? "success"
-                        : "neutral"
+                          ? "info"
+                          : t.status === "resolved"
+                            ? "success"
+                            : "neutral"
                     }
                     dot
                   >
@@ -257,10 +351,18 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
                   </Badge>
                 </Td>
                 <Td className="text-xs text-muted-foreground">
-                  {new Date(t.createdAt).toLocaleDateString([], { month: "short", day: "numeric" })}
+                  {new Date(t.createdAt).toLocaleDateString([], {
+                    month: "short",
+                    day: "numeric",
+                  })}
                 </Td>
                 <Td className="text-right">
-                  <Button variant="secondary" size="sm" className="h-8 text-xs" onClick={() => setSelectedTicket(t)}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => setSelectedTicket(t)}
+                  >
                     Open Ticket
                   </Button>
                 </Td>
@@ -268,7 +370,10 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <Td colSpan={9} className="py-8 text-center text-sm text-muted-foreground">
+                <Td
+                  colSpan={9}
+                  className="py-8 text-center text-sm text-muted-foreground"
+                >
                   No support tickets match the selected filters.
                 </Td>
               </tr>
@@ -290,7 +395,12 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">Status:</span>
-                <Badge tone={selectedTicket.status === "resolved" ? "success" : "warning"} dot>
+                <Badge
+                  tone={
+                    selectedTicket.status === "resolved" ? "success" : "warning"
+                  }
+                  dot
+                >
                   {selectedTicket.status.replace("_", " ")}
                 </Badge>
               </div>
@@ -334,12 +444,25 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
                     }`}
                   >
                     <div className="flex items-center justify-between pb-1 text-[11px] font-semibold text-muted-foreground">
-                      <span className={msg.isStaff ? "text-primary font-bold" : "text-foreground"}>
+                      <span
+                        className={
+                          msg.isStaff
+                            ? "text-primary font-bold"
+                            : "text-foreground"
+                        }
+                      >
                         {msg.senderName} {msg.isStaff ? "(Staff)" : ""}
                       </span>
-                      <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                      <span>
+                        {new Date(msg.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
-                    <p className="mt-1 text-sm text-foreground">{msg.content}</p>
+                    <p className="mt-1 text-sm text-foreground">
+                      {msg.content}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -354,7 +477,13 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
                   className="w-full rounded-xl border border-border bg-input p-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
                 <div className="flex justify-end">
-                  <Button type="submit" variant="primary" size="sm" loading={isPending} disabled={!replyText.trim()}>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    loading={isPending}
+                    disabled={!replyText.trim()}
+                  >
                     <Send className="h-3.5 w-3.5" /> Send Reply
                   </Button>
                 </div>
@@ -370,14 +499,19 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
 
               <div className="space-y-2">
                 {selectedTicket.internalNotes.map((note) => (
-                  <div key={note.id} className="rounded-xl border border-warning/30 bg-warning-soft/30 p-3 text-xs">
+                  <div
+                    key={note.id}
+                    className="rounded-xl border border-warning/30 bg-warning-soft/30 p-3 text-xs"
+                  >
                     <div className="flex items-center justify-between font-semibold text-foreground">
                       <span>{note.authorName}</span>
                       <span className="font-mono text-[10px] text-muted-foreground">
                         {new Date(note.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
-                    <p className="mt-1 text-foreground leading-relaxed">{note.note}</p>
+                    <p className="mt-1 text-foreground leading-relaxed">
+                      {note.note}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -391,7 +525,13 @@ export function SupportView({ tickets: initialTickets }: SupportViewProps) {
                   className="h-9 w-full rounded-xl border border-border bg-input px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
                 <div className="flex justify-end">
-                  <Button type="submit" variant="secondary" size="sm" loading={isPending} disabled={!noteText.trim()}>
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    size="sm"
+                    loading={isPending}
+                    disabled={!noteText.trim()}
+                  >
                     Add Note
                   </Button>
                 </div>

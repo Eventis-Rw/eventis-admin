@@ -82,7 +82,7 @@ export interface Notice {
   type: "reminder" | "overdue";
   channels: ("sms" | "email")[];
   created_at: string;
-  status: "simulated";
+  status: "simulated" | "pending" | "sent" | "failed";
 }
 export interface Audit {
   id: string;

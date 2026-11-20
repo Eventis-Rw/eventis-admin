@@ -18,7 +18,10 @@ import {
   type OrganiserCatalog,
 } from "@/lib/organiser-plans";
 
-export type Run = (command: Command, message: string) => boolean;
+export type Run = (
+  command: Command,
+  message: string,
+) => boolean | Promise<boolean>;
 export function Field({
   label,
   children,
@@ -128,11 +131,11 @@ export function RepaymentPlanForm({
   return (
     <form
       className="space-y-4"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         const data = new FormData(e.currentTarget);
         if (
-          run(
+          await run(
             {
               type: "save_plan",
               id: plan?.id,
@@ -255,11 +258,11 @@ export function AssignmentForm({
   return (
     <form
       className="space-y-5"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         if (!rows.length) return;
         if (
-          run(
+          await run(
             {
               type: "assign",
               customer_id: customer,

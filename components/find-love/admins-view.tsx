@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Check,
-  ShieldCheck,
-  UserCog,
-  X,
-} from "lucide-react";
+import { Check, ShieldCheck, UserCog, X } from "lucide-react";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -14,17 +9,65 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Table, Td, Th } from "@/components/ui/table";
 import type { AdminAccount } from "@/lib/find-love/types";
 
-export function AdminsView({ admins }: { admins: AdminAccount[] }) {
+export function AdminsView({
+  admins,
+  live,
+}: {
+  admins: AdminAccount[];
+  live?: boolean;
+}) {
   const [adminList] = useState<AdminAccount[]>(admins);
 
   const permissionsMatrix = [
-    { role: "Super Administrator", viewDocs: true, pricing: true, refunds: true, suspend: true, support: true },
-    { role: "Verification Officer", viewDocs: true, pricing: false, refunds: false, suspend: false, support: false },
-    { role: "Finance Administrator", viewDocs: false, pricing: true, refunds: true, suspend: false, support: false },
-    { role: "Safety & Moderation Officer", viewDocs: false, pricing: false, refunds: false, suspend: true, support: true },
-    { role: "Customer Support Agent", viewDocs: false, pricing: false, refunds: false, suspend: false, support: true },
-    { role: "Read-only Analyst", viewDocs: false, pricing: false, refunds: false, suspend: false, support: false },
-  ];
+    {
+      role: "Super Administrator",
+      viewDocs: true,
+      pricing: true,
+      refunds: true,
+      suspend: true,
+      support: true,
+    },
+    {
+      role: "Verification Officer",
+      viewDocs: true,
+      pricing: false,
+      refunds: false,
+      suspend: false,
+      support: false,
+    },
+    {
+      role: "Finance Administrator",
+      viewDocs: false,
+      pricing: true,
+      refunds: true,
+      suspend: false,
+      support: false,
+    },
+    {
+      role: "Safety & Moderation Officer",
+      viewDocs: false,
+      pricing: false,
+      refunds: false,
+      suspend: true,
+      support: true,
+    },
+    {
+      role: "Customer Support Agent",
+      viewDocs: false,
+      pricing: false,
+      refunds: false,
+      suspend: false,
+      support: true,
+    },
+    {
+      role: "Read-only Analyst",
+      viewDocs: false,
+      pricing: false,
+      refunds: false,
+      suspend: false,
+      support: false,
+    },
+  ].filter((_, index) => !live || index === 0);
 
   return (
     <div className="space-y-6">
@@ -32,8 +75,12 @@ export function AdminsView({ admins }: { admins: AdminAccount[] }) {
       <div className="flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary-soft p-4 text-xs leading-relaxed text-foreground">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         <div>
-          <p className="font-semibold text-primary">Role-Based Access Control (RBAC) & Least-Privilege Architecture</p>
-          Permissions are strictly segregated. Verification officers can review sensitive identification documents without accessing billing or pricing. Finance administrators manage payment adjustments and plan rates without viewing identity documents.
+          <p className="font-semibold text-primary">
+            Role-Based Access Control (RBAC) & Least-Privilege Architecture
+          </p>
+          {live
+            ? "The current backend has one administrator role with full dashboard permissions. Specialized staff roles are not configured."
+            : "Permissions are strictly segregated. Verification officers can review sensitive identification documents without accessing billing or pricing. Finance administrators manage payment adjustments and plan rates without viewing identity documents."}
         </div>
       </div>
 
@@ -42,7 +89,9 @@ export function AdminsView({ admins }: { admins: AdminAccount[] }) {
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-2">
             <UserCog className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold text-foreground">Active Administrative Accounts</h2>
+            <h2 className="text-base font-semibold text-foreground">
+              Active Administrative Accounts
+            </h2>
           </div>
           <Badge tone="info">{adminList.length} staff members</Badge>
         </div>
@@ -62,18 +111,27 @@ export function AdminsView({ admins }: { admins: AdminAccount[] }) {
           </thead>
           <tbody>
             {adminList.map((admin) => (
-              <tr key={admin.id} className="hover:bg-muted/30 transition-colors">
+              <tr
+                key={admin.id}
+                className="hover:bg-muted/30 transition-colors"
+              >
                 <Td>
                   <div className="flex items-center gap-2.5">
                     <Avatar name={admin.name} className="h-8 w-8" />
                     <div>
-                      <p className="font-semibold text-foreground">{admin.name}</p>
-                      <p className="text-xs text-muted-foreground">{admin.email}</p>
+                      <p className="font-semibold text-foreground">
+                        {admin.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {admin.email}
+                      </p>
                     </div>
                   </div>
                 </Td>
                 <Td>
-                  <Badge tone={admin.role === "super_admin" ? "info" : "neutral"}>
+                  <Badge
+                    tone={admin.role === "super_admin" ? "info" : "neutral"}
+                  >
                     {admin.roleLabel}
                   </Badge>
                 </Td>
@@ -81,37 +139,53 @@ export function AdminsView({ admins }: { admins: AdminAccount[] }) {
                   {admin.canViewDocuments ? (
                     <Badge tone="success">Granted</Badge>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Restricted</span>
+                    <span className="text-xs text-muted-foreground">
+                      Restricted
+                    </span>
                   )}
                 </Td>
                 <Td>
                   {admin.canChangePricing ? (
                     <Badge tone="success">Granted</Badge>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Restricted</span>
+                    <span className="text-xs text-muted-foreground">
+                      Restricted
+                    </span>
                   )}
                 </Td>
                 <Td>
                   {admin.canRefundPayments ? (
                     <Badge tone="success">Granted</Badge>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Restricted</span>
+                    <span className="text-xs text-muted-foreground">
+                      Restricted
+                    </span>
                   )}
                 </Td>
                 <Td>
                   {admin.canSuspendUsers ? (
                     <Badge tone="success">Granted</Badge>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Restricted</span>
+                    <span className="text-xs text-muted-foreground">
+                      Restricted
+                    </span>
                   )}
                 </Td>
                 <Td>
-                  <Badge tone={admin.status === "active" ? "success" : "danger"} dot>
+                  <Badge
+                    tone={admin.status === "active" ? "success" : "danger"}
+                    dot
+                  >
                     {admin.status}
                   </Badge>
                 </Td>
                 <Td className="text-xs text-muted-foreground">
-                  {new Date(admin.lastActiveAt).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  {new Date(admin.lastActiveAt).toLocaleDateString([], {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </Td>
               </tr>
             ))}

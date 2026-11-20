@@ -9,13 +9,22 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { loadAudit, loadBookings, loadEvents, loadUsers } from "@/lib/eventis/data";
 import { fmtDateTime, fmtNumber, fullName } from "@/lib/format";
+import { loadConsoleAccess } from "@/lib/eventis/console-access";
 import { requireAdmin } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
   const { token } = await requireAdmin();
-  const [users, events, bookings, audit] = await Promise.all([loadUsers(token), loadEvents(token), loadBookings(), loadAudit()]);
+  const access = await loadConsoleAccess(token);
+  const [users, events, bookings, audit] = await Promise.all([
+    !access || access.unrestricted || access.permissions.includes("users:read")
+      ? loadUsers(token) : { ok: false as const, error: "Your role does not include user metrics." },
+    !access || access.unrestricted || access.permissions.includes("events:read")
+      ? loadEvents(token) : { ok: false as const, error: "Your role does not include event metrics." },
+    loadBookings(),
+    !access || access.unrestricted || access.permissions.includes("audit:read") ? loadAudit() : null,
+  ]);
 
   const userList = users.ok ? users.data : [];
   const eventList = events.ok ? events.data.items : [];
@@ -110,7 +119,7 @@ export default async function OverviewPage() {
         <Card className="xl:col-span-2">
           <CardHeader
             title="Recent platform activity"
-            description={audit ? "Registrations, new events and admin actions." : "Derived from account and event creation times. No audit feed exists yet."}
+            description={audit ? "Registrations, new events and admin actions." : "Registrations and new events available to your role."}
             action={<Link href="/eventis/audit" className="text-xs font-semibold text-primary hover:underline">Audit log status</Link>}
           />
           {activity.length === 0 ? (

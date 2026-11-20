@@ -18,7 +18,7 @@ import {
   Empty,
   formString,
 } from "./shared";
-export function Verification({ state, now, mutate }: ViewProps) {
+export function Verification({ state, now, mutate, live }: ViewProps) {
   const [selected, setSelected] = useState<Member | null>(null),
     [filter, setFilter] = useState("pending"),
     [search, setSearch] = useState("");
@@ -32,7 +32,11 @@ export function Verification({ state, now, mutate }: ViewProps) {
       <Card>
         <CardHeader
           title="Age verification review"
-          description="Synthetic review cases demonstrate approval, rejection and resubmission. Real document inspection and automated checks require the backend."
+          description={
+            live
+              ? "Review submitted verification cases and record approval, rejection or resubmission decisions."
+              : "Synthetic review cases demonstrate approval, rejection and resubmission. Real document inspection and automated checks require the backend."
+          }
         />
         <div className="flex flex-wrap gap-3 p-5">
           <Select
@@ -96,15 +100,19 @@ export function Verification({ state, now, mutate }: ViewProps) {
         open={!!selected}
         onClose={() => setSelected(null)}
         title={`Review ${selected?.name ?? "verification"}`}
-        description="Demo identity data only. Do not upload real identity documents."
+        description={
+          live
+            ? "Inspect the actual identity document through your verification process before approving the recorded data."
+            : "Demo identity data only. Do not upload real identity documents."
+        }
       >
         {selected && (
           <form
             className="space-y-4"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               if (
-                mutate({
+                await mutate({
                   type: "verify",
                   id: selected.id,
                   decision: formString(
@@ -118,7 +126,10 @@ export function Verification({ state, now, mutate }: ViewProps) {
             }}
           >
             <div className="rounded-xl border border-border bg-muted p-4 text-sm leading-relaxed">
-              <p>{selected.document} · Synthetic case</p>
+              <p>
+                {selected.document} ·{" "}
+                {live ? "Submitted case" : "Synthetic case"}
+              </p>
               <p>Date of birth: {selected.dob}</p>
               <p>
                 Age eligibility:{" "}
@@ -150,7 +161,7 @@ export function Verification({ state, now, mutate }: ViewProps) {
     </>
   );
 }
-export function Safety({ state, mutate }: ViewProps) {
+export function Safety({ state, mutate, live }: ViewProps) {
   const [selected, setSelected] = useState<Report | null>(null),
     [filter, setFilter] = useState("open");
   const reports = state.reports.filter(
@@ -161,7 +172,11 @@ export function Safety({ state, mutate }: ViewProps) {
       <Card>
         <CardHeader
           title="Reports & account moderation"
-          description="Review synthetic reports, document decisions and suspend or ban the reported account. Account restrictions apply immediately throughout this demo."
+          description={
+            live
+              ? "Review reported cases and record decisions. Suspensions and bans restrict the account immediately."
+              : "Review synthetic reports, document decisions and suspend or ban the reported account. Account restrictions apply immediately throughout this demo."
+          }
         />
         <div className="p-5">
           <Select
@@ -222,10 +237,10 @@ export function Safety({ state, mutate }: ViewProps) {
         {selected && (
           <form
             className="space-y-4"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               if (
-                mutate({
+                await mutate({
                   type: "report",
                   id: selected.id,
                   decision: formString(e.currentTarget, "decision") as

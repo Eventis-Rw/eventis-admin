@@ -15,16 +15,20 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   token?: string;
   query?: Record<string, string | number | undefined>;
   body?: unknown;
 }
 
-export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function apiFetch<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
   const url = new URL(`${API_BASE_URL}/api/v1${path}`);
   for (const [key, value] of Object.entries(options.query ?? {})) {
-    if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
+    if (value !== undefined && value !== "")
+      url.searchParams.set(key, String(value));
   }
 
   const headers: Record<string, string> = { Accept: "application/json" };
@@ -36,12 +40,17 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     response = await fetch(url, {
       method: options.method ?? "GET",
       headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body:
+        options.body === undefined ? undefined : JSON.stringify(options.body),
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });
   } catch {
-    throw new ApiError("The Eventis API is unreachable. Check that the backend is running.", 503, "UNREACHABLE");
+    throw new ApiError(
+      "The Eventis API is unreachable. Check that the backend is running.",
+      503,
+      "UNREACHABLE",
+    );
   }
 
   if (response.status === 204) return undefined as T;
@@ -49,7 +58,11 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     const body = (payload ?? {}) as { message?: string; code?: string };
-    throw new ApiError(body.message ?? `Request failed (${response.status})`, response.status, body.code);
+    throw new ApiError(
+      body.message ?? `Request failed (${response.status})`,
+      response.status,
+      body.code,
+    );
   }
   return payload as T;
 }
@@ -59,10 +72,18 @@ export async function toResult<T>(work: () => Promise<T>): Promise<Result<T>> {
     return { ok: true, data: await work() };
   } catch (error) {
     if (error instanceof ApiError) {
-      if (error.status === 401) return { ok: false, error: "Your session has expired. Sign in again." };
-      if (error.status === 403) return { ok: false, error: "You do not have permission to access this resource." };
+      if (error.status === 401)
+        return { ok: false, error: "Your session has expired. Sign in again." };
+      if (error.status === 403)
+        return {
+          ok: false,
+          error: "You do not have permission to access this resource.",
+        };
       return { ok: false, error: error.message };
     }
-    return { ok: false, error: "Something went wrong while contacting the API." };
+    return {
+      ok: false,
+      error: "Something went wrong while contacting the API.",
+    };
   }
 }

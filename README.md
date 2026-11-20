@@ -35,16 +35,27 @@ To check the project, run `npm run lint` and `npm run build`. After a successful
 | Events (read-only) | Live | `/events/admin/all` |
 | Organisers | Live (no verification) | derived from users + events |
 | Settings / roles | Live (read-only) | `/auth/me` |
-| Organiser plans & pricing | Frontend demo | `/eventis/plans` |
-| Bookings & tickets, Reports & messages, Audit log | Backend gap | no endpoints exist |
+| Organiser plans & pricing | Live in API mode | `/admin/organiser-catalog` |
+| Installment agreements, receipts, refunds, schedules, reports | Live in API mode | `/admin/installment-workspace` |
+| Reports & moderation, Audit log | Live in API mode | `/admin/reports`, `/admin/audit-logs` |
+| Bookings & tickets | Backend gap | No order/ticket ledger exists; no sample records in API mode |
 
-## Backend gaps
+## Backend integration
 
-- No bookings/orders/tickets, reports/support, audit-log, settings or stats endpoints.
-- No organiser verification model; only `ADMIN` and `CUSTOMER` roles.
-- Users list has no server-side pagination, search or filters (handled client-side).
-- Events: admin cannot edit/cancel/delete others' events; no status filter.
-- No CORS, hence the server-side proxy design.
+See [the integration guide](docs/backend-integration.md) for backend setup, migrations, endpoint
+contracts, verification and current limitations. The matching backend work is in
+`Eventis-api-admin-integration`, on `feat/admin-frontend-integration`; the original `Eventis-api`
+checkout was preserved. Run the matching backend branch before enabling API mode.
+
+API mode uses PostgreSQL records for organiser pricing, installment agreements and FindLove
+memberships, receipts, access rules, verification, safety reports, photo moderation, support,
+notification previews and staff listings. Failed API requests do not fall back to demo data.
+Payment entries record external receipts/refunds; they never initiate a Mobile Money charge.
+Installment reminders remain pending until a delivery worker/provider is connected. Notification
+template tests create an in-app preview for the acting admin only.
+
+The backend currently has a single administrator role. Specialized staff permissions and an
+order/ticket ledger are still absent. Existing read-only event/settings views remain read-only.
 
 ## Project structure
 
@@ -76,7 +87,7 @@ Open **Eventis → Plans & pricing** (`/eventis/plans`). Admins can create and e
 set platform-wide single-post and post-bundle prices, configure monthly/quarterly/yearly
 subscriptions, toggle availability, edit benefits/badges, and choose supported payment methods.
 The checkout preview immediately reflects draft changes; **Save all plans** persists them in
-this browser. Use **Manage installments** to configure repayment of an organiser purchase.
+the backend in API mode, or this browser in demo mode. Use **Manage installments** to configure repayment of an organiser purchase.
 
 Starting values mirror `Eventis-mobile-app/services/organiserService.ts`: RWF 2,180 for one post,
 RWF 4,180 for two posts, RWF 18,000 monthly, RWF 48,000 quarterly and RWF 170,000 yearly.
@@ -85,10 +96,10 @@ single-post price. Posts do not expire; subscriptions provide unlimited posting 
 All product prices use whole Rwandan francs. The pricing preview shows the full purchase price;
 **Set up installments for this purchase** opens its repayment preview.
 
-This is frontend-only. Catalog settings use localStorage (`eventis.organiser-plans.v1`) and
-apply to all organiser purchases in the admin checkout preview. The separate mobile app is
-unchanged; shared live pricing will need integration later. Attendee ticket pricing remains
-organiser-controlled.
+In API mode, catalog settings update canonical organiser plans. In demo mode, settings use
+localStorage (`eventis.organiser-plans.v1`). Exact bundle totals remain separate price options.
+The mobile app source is unchanged; its screens must consume the shared catalog to display all
+bundle options and configured payment methods. Attendee ticket pricing remains organiser-controlled.
 
 Checks: `npm run test:plans`, `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
 In restricted environments where Turbopack cannot open its internal port, use
@@ -123,14 +134,18 @@ reminders, per-currency collections reports, date/customer/status/frequency filt
   filters apply to due dates and receipt/refund recording dates independently; balances include
   all receipts to date.
 
-Records persist in this browser under `eventis.installments.v1`. This is a frontend demo: recording
-payments/refunds moves no money and reminders send no messages. It is not a shared payment ledger.
-No new installment API or provider integration is introduced. FindLove has a separate membership
-demo described below; its full-period purchases do not use Eventis installment agreements.
+In API mode, agreements, schedules, receipts, refund records and audit entries persist in canonical
+backend tables. Revision checks reject stale edits; request IDs prevent duplicate retries. Reminders
+are stored as pending, with no delivery claim. Recording a receipt/refund does not move money.
+In demo mode, records persist in this browser under `eventis.installments.v1` and reminders are simulated.
+FindLove full-period memberships do not use Eventis installment agreements.
 
 Run `npm run test:installments` for the repayment and lifecycle tests in addition to the checks above.
 
-## Presentation walkthrough for 11 November 2026
+## Demo presentation walkthrough for 11 November 2026
+
+This walkthrough describes mock mode. In API mode, use actual customers, saved backend plans and
+external receipt references; changes affect real account access. No payment-provider charge is initiated.
 
 ### The opening explanation
 
@@ -256,16 +271,16 @@ Cancelled balances are excluded from collection totals.
 rounding differences across installments. Monthly/yearly dates keep the original day where
 possible and clamp to month end. Payment counts exclude the initial payment.
 
-**What has been verified?** The pricing and repayment suites currently cover 25 tests, with lint,
+**What was verified for the original demo?** The pricing and repayment suites covered 25 tests, with lint,
 TypeScript, a Webpack production build and browser workflow checks. The browser checks exercised
 linked bundle pricing, template creation, payments/refunds, fees, reminders, revisions,
 cancellation, report export, persistence after reload and phone layouts.
 
-**Is this connected to real payments or the mobile app?** No. This delivery is frontend-only.
-Plans and agreements are saved in this browser, not shared across staff accounts/devices.
-Recording receipts/refunds does not move funds, and reminders do not send SMS or email. The mobile
-app's starting prices informed the catalog, but the admin does not update that app yet. A later
-integration needs shared storage/API contracts, payment reconciliation and a messaging provider.
+**Is this connected to real payments or the mobile app?** API mode now saves shared backend plans,
+agreements and external receipt records; mock mode remains browser-only. Recording receipts/refunds
+moves no funds, and SMS/email reminder delivery is not configured. FindLove access updates affect
+native memberships and eligibility. The mobile source has not been changed; its catalog integration
+is a separate step. See [the integration guide](docs/backend-integration.md) for exact boundaries.
 
 **What about Find Love?** The original generic installment specification did not name Find Love.
 Eventis installment agreements target organiser purchases. FindLove now has separate full-payment
@@ -281,7 +296,8 @@ See the FindLove demonstration below. The mobile app itself has not been edited.
 
 ## FindLove membership management
 
-The membership demo follows the existing mobile app rules. Both Public and Private are paid tiers,
+Membership management follows the existing mobile app rules. API mode reads canonical backend
+records; mock mode uses the original browser demo. Both Public and Private are paid tiers,
 with 7-day, 30-day and 365-day plans. Starting RWF prices are Public **499 / 999 / 9,999** and
 Private **999 / 2,499 / 24,999**. These are the mobile app’s placeholder prices, not approved rates.
 Private profiles remain discoverable. The distinction is connection privileges:
@@ -290,24 +306,23 @@ Private member’s request. Discovery is country-scoped. Before acceptance, each
 text message of up to 200 characters. There is no FindLove installment billing, incognito,
 boosts, grace-period access or automatic renewal in this workflow.
 
-| Screen | Demonstration |
+| Screen | Behavior (demo outcomes are simulated in mock mode) |
 | --- | --- |
 | `/find-love` | Shared membership, revenue and access totals; links to operations |
 | `/find-love/subscriptions` | Edit six plan prices; enable/disable new purchases with a reason |
 | `/find-love/settings` | Configure all four initiation permissions and test member eligibility |
 | `/find-love/users` | Search/filter members; grant, extend, revoke, suspend, ban or restore access |
 | `/find-love/users/[id]` | View the member’s saved price, expiry and connection permissions |
-| `/find-love/payments` | Simulate successful/pending/failed full payments and settle pending payments |
-| `/find-love/verification` | Approve, reject or request resubmission for synthetic adult-verification cases |
-| `/find-love/safety` | Review synthetic reports; resolve/dismiss or suspend/ban the reported account |
+| `/find-love/payments` | Record external successful/pending/failed payments and confirm manual pending receipts |
+| `/find-love/verification` | Review submitted adult-verification cases; mock mode uses synthetic cases |
+| `/find-love/safety` | Resolve/dismiss member reports or suspend/ban the reported account |
 | `/find-love/statistics` | Filter payments by customer, tier, status and date; export the selection as CSV |
-| `/find-love/audit` | Review timestamped changes and reasons, recorded as Demo Admin |
+| `/find-love/audit` | Review timestamped changes, reasons and actual acting admins in API mode |
 
-All these screens use the same versioned browser record, `eventis.findlove.memberships.v1`.
-Changes survive reload and synchronize between tabs in the same browser. The seed date is
-10 November 2026. The demo uses synthetic members and case metadata; it does not store ID uploads.
-Existing photo moderation, support, notification and staff screens remain separate legacy demos;
-they are not integrated into this membership record.
+In mock mode, the membership screens use `eventis.findlove.memberships.v1`. Changes survive reload
+and synchronize between tabs. The seed date is 10 November 2026; members and case metadata are synthetic.
+In API mode, photo moderation, support, notifications and staff screens also use backend contracts.
+Notification templates remain drafts/previews and staff listings reflect the single actual ADMIN role.
 
 ### Rules worth explaining during the presentation
 

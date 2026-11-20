@@ -47,6 +47,7 @@ export interface Report {
   status: "open" | "resolved" | "dismissed";
 }
 export interface Entry {
+  actorName?: string;
   id: string;
   at: string;
   action: string;
