@@ -29,6 +29,8 @@ const eventisAccess: Record<string, ConsolePermission[]> = {
   "/eventis/events": ["events:read"],
   "/eventis/plans": ["catalog:manage"],
   "/eventis/installments": ["users:read", "catalog:manage", "installments:manage"],
+  "/eventis/manual-payments": ["subscriptions:activate"],
+  "/eventis/manual-payments/methods": ["catalog:manage"],
   "/eventis/organisers": ["users:read", "organisers:verify", "promotions:manage", "subscriptions:activate"],
   "/eventis/moderation": ["reports:manage"],
   "/eventis/audit": ["audit:read"],
