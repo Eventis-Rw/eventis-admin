@@ -138,6 +138,34 @@ export function Verification({ state, now, mutate, live }: ViewProps) {
                   : "Under 18 — cannot approve"}
               </p>
             </div>
+            {live && selected.verificationId ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {["front", ...(selected.hasDocumentBack ? ["back"] : [])].map(
+                  (side) => {
+                    const url = `/api/find-love/verifications/${selected.verificationId}/${side}`;
+                    return (
+                      <a
+                        key={side}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-xl border border-border p-2 text-xs font-medium"
+                      >
+                        <span className="capitalize">
+                          {side} document · Open full size
+                        </span>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- authenticated private document */}
+                        <img
+                          src={url}
+                          alt={`${side} of submitted identity document`}
+                          className="mt-2 max-h-52 w-full object-contain"
+                        />
+                      </a>
+                    );
+                  },
+                )}
+              </div>
+            ) : null}
             <Field label="Review decision">
               <Select name="decision" defaultValue="verified">
                 <option value="verified" disabled={!adult(selected.dob, now)}>
