@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:auth": "node --test tests/admin-auth.test.mjs",
     "test:plans": "node tests/organiser-plans.test.mjs",
     "test:installments": "node tests/installments.test.mjs",
     "test:findlove": "node tests/findlove-memberships.test.mjs",
