@@ -13,7 +13,11 @@ const NOTICES: Record<string, string> = {
   expired: "Your session has expired. Please sign in again.",
 };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string; error?: string }>;
+}) {
   const { next, error } = await searchParams;
   const session = await getSession().catch(() => null);
   if (session && isAdmin(session.user)) redirect("/eventis");
@@ -25,15 +29,21 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <BrandMark className="h-11 w-11 text-lg" />
           <div>
             <p className="text-lg font-extrabold tracking-tight">EVENTIS</p>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Admin </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Admin{" "}
+            </p>
           </div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
           <h1 className="text-xl font-bold">Sign in</h1>
-          <p className="mb-5 mt-1 text-sm text-muted-foreground">Use your administrator </p>
+          <p className="mb-5 mt-1 text-sm text-muted-foreground">
+            Use your administrator email and password.
+          </p>
           <LoginForm next={next} notice={error ? NOTICES[error] : undefined} />
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">Access is restricted to authorised administrators.</p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Access is restricted to authorised administrators.
+        </p>
       </div>
     </main>
   );

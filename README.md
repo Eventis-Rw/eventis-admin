@@ -16,12 +16,11 @@ If Node is installed at `~/.local/node` but `node` or `npm` is not found, run
 `export PATH="$HOME/.local/node/bin:$PATH"` before these commands. Add that line to your shell's startup
 file to make it available in future terminals.
 
-The default `DATA_SOURCE="mock"` uses built-in sample data and needs no backend. Open `/login` and enter
-any phone number and 5-digit PIN (for example, `+250788000001` and `12345`).
+Admin sign-in uses email and password through `POST /api/v1/auth/admin/login`. Set `DATA_SOURCE="api"` and `API_BASE_URL` in `.env.local`, then restart the server. Create the initial account with `bun run db:seed:admin` in `Eventis-api` after configuring `ADMIN_SEED_EMAIL` and `ADMIN_SEED_PASSWORD` in the backend environment. No phone or PIN is required.
 
-For the real backend, set `DATA_SOURCE="api"` and `API_BASE_URL` in `.env.local`, then restart the dev
-server. Sign in with an account whose role is `admin` (phone + 5-digit PIN). Tokens live in httpOnly
-cookies; API calls happen server-side, and every page/action re-verifies the admin role through `/auth/me`.
+Local UI previews can explicitly set `DATA_SOURCE="mock"` and enter a syntactically valid email and any nonempty password. Mock authentication is disabled in production. Seed passwords belong only in the backend environment and must never be placed in frontend public variables.
+
+Tokens live in httpOnly cookies; API calls happen server-side, and every page/action re-verifies the admin role through `/auth/me`.
 
 To check the project, run `npm run lint` and `npm run build`. After a successful build,
 `npm start` runs the production server.

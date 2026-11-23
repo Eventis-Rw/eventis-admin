@@ -20,4 +20,5 @@ export const ACCESS_COOKIE = "eventis_admin_at";
 export const REFRESH_COOKIE = "eventis_admin_rt";
 
 const rawDataSource = (process.env.DATA_SOURCE ?? "").trim().replace(/^["']|["']$/g, "").toLowerCase();
-export const USE_MOCK_DATA = rawDataSource !== "api";
+// Preview authentication is opt-in and is never available in production.
+export const USE_MOCK_DATA = process.env.NODE_ENV !== "production" && rawDataSource === "mock";
