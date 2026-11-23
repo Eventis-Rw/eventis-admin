@@ -177,7 +177,12 @@ export function Payments({ state, mutate, live }: ViewProps) {
             {payments.map((p) => (
               <tr key={p.id}>
                 <Td>
-                  <span className="text-xs">{p.id}</span>
+                  <span className="text-xs">{p.reference ?? p.id}</span>
+                  {p.source === "manual" ? (
+                    <p className="text-xs text-muted-foreground">
+                      Receipt submission
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-xs text-muted-foreground">
                     {dateLabel(p.createdAt)}
                   </p>
@@ -195,7 +200,14 @@ export function Payments({ state, mutate, live }: ViewProps) {
                   <Status value={p.status} />
                 </Td>
                 <Td>
-                  {p.status === "pending" ? (
+                  {p.source === "manual" ? (
+                    <a
+                      href="/find-love/manual-payments"
+                      className="text-sm font-semibold text-primary hover:underline"
+                    >
+                      View receipt
+                    </a>
+                  ) : p.status === "pending" ? (
                     <Button
                       variant="secondary"
                       size="sm"
