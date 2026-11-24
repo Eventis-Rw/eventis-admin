@@ -46,7 +46,8 @@ function Header() {
       <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Manual Payments</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Organisers who paid an MTN Mobile Money or Airtel Money number out of band and uploaded a screenshot as
-        proof. Approving activates their plan and emails them; rejecting requires a reason and also emails them.
+        proof. Approving verifies the payment; new organiser applications then require a separate decision in Organiser applications.
+        Existing organisers&apos; plan renewals activate when their payment is verified. Rejecting requires a reason.
         This is separate from the transaction-reference flow on the Plans & pricing and Installments screens.
       </p>
     </div>

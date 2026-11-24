@@ -26,6 +26,7 @@ export default async function OrganisersPage() {
   return (
     <div className="space-y-4">
       <nav aria-label="Organiser administration" className="flex flex-wrap gap-3">
+        {access?.unrestricted ? <Link href="/eventis/organisers/applications" className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold hover:bg-muted">Organiser applications</Link> : null}
         {Object.entries(organiserWorkflows).filter(([, item]) => access?.unrestricted || access?.permissions.includes(item.permission)).map(([slug, item]) => (
           <Link key={slug} href={`/eventis/organisers/${slug}`} className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold hover:bg-muted">{item.title}</Link>
         ))}
