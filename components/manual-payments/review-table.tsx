@@ -281,6 +281,7 @@ function ReviewDialog({
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
+  const [verifiedTransactionId, setVerifiedTransactionId] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -292,7 +293,11 @@ function ReviewDialog({
     if (!submission) return;
     setError("");
     startTransition(async () => {
-      const result = await approveManualPaymentAction(submission.id);
+      if (submission.platform === "organiser" && !verifiedTransactionId.trim()) {
+        setError("Enter the verified provider transaction ID.");
+        return;
+      }
+      const result = await approveManualPaymentAction(submission.id, verifiedTransactionId.trim() || undefined);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -403,9 +408,16 @@ function ReviewDialog({
         ) : confirmApprove ? (
           <div className="space-y-3 rounded-xl border border-border p-4">
             <p className="text-sm">
-              Approving activates the member&apos;s subscription immediately and emails them. This cannot be undone
-              from here.
+              {submission.platform === "organiser"
+                ? "Verify the transaction directly with the provider before confirming. New applicants then require a separate application decision; existing organisers' renewals activate."
+                : "Approving activates the member's subscription immediately and emails them. This cannot be undone from here."}
             </p>
+            {submission.platform === "organiser" ? (
+              <label className="block space-y-1 text-sm">
+                Verified provider transaction ID
+                <input value={verifiedTransactionId} onChange={(event) => setVerifiedTransactionId(event.target.value)} maxLength={160} className="w-full rounded-md border border-border bg-background px-3 py-2" />
+              </label>
+            ) : null}
             <div className="flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setConfirmApprove(false)} disabled={isPending}>
                 Cancel

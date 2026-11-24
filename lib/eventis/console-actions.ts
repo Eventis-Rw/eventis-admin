@@ -58,6 +58,7 @@ export async function reviewOrganiser(workflow: OrganiserWorkflow, id: string, _
     if (workflow === "subscriptions" && !form.has("paymentConfirmed")) {
       return { error: "Confirm that you verified the payment before activating." };
     }
+
     return submit(`${path}/activate`, "POST", undefined, refresh);
   }
   if (workflow === "subscriptions" || !["approve", "reject"].includes(operation)) {
@@ -67,4 +68,14 @@ export async function reviewOrganiser(workflow: OrganiserWorkflow, id: string, _
   if (operation === "reject" && !rejectionReason) return { error: "Enter a rejection reason." };
   const status = operation === "reject" ? "REJECTED" : workflow === "verification" ? "VERIFIED" : "APPROVED";
   return submit(path, "PATCH", { status, rejectionReason: rejectionReason || null }, refresh);
+}
+
+export async function reviewApplication(id: string, _: Feedback, form: FormData) {
+  const operation = field(form, "operation");
+  if (operation !== "approve" && operation !== "reject") return { error: "Choose a valid decision." };
+  const rejectionReason = field(form, "rejectionReason");
+  if (operation === "reject" && !rejectionReason) return { error: "Enter a rejection reason." };
+  return submit(`/admin/organiser-applications/${encodeURIComponent(id)}/review`, "POST",
+    operation === "approve" ? { status: "APPROVED" } : { status: "REJECTED", rejectionReason },
+    "/eventis/organisers/applications");
 }

@@ -75,12 +75,14 @@ export async function markManualPaymentUnderReviewAction(
 
 export async function approveManualPaymentAction(
   id: string,
+  verifiedTransactionId?: string,
 ): Promise<Result<ManualPaymentSubmission>> {
   const { token } = await requireAdmin();
   const result = await toResult(() =>
     apiFetch<ManualPaymentSubmission>(`/admin/manual-payments/${id}/approve`, {
       method: "POST",
       token,
+      body: verifiedTransactionId ? { verified_transaction_id: verifiedTransactionId } : undefined,
     }),
   );
   if (result.ok) revalidateReviewPaths();
