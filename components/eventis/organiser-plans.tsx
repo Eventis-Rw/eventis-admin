@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
-import { Check, CreditCard, Pencil, Plus, Save, Ticket, X } from "lucide-react";
+import { Check, CreditCard, Pencil, Plus, Save, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -693,102 +693,46 @@ function PlanEditor({
         </Field>
         <fieldset className="space-y-3">
           <legend className="mb-2 text-sm font-semibold">
-            {draft.interval === "post"
-              ? "Single-post and bundle prices"
-              : "Subscription durations and prices"}
+            {draft.interval === "post" ? "Post quota and price" : "Duration and price"}
           </legend>
-          {draft.prices.map((v, i) => (
-            <div key={i} className="flex items-end gap-2">
-              <Field
-                label={
-                  draft.interval === "post"
-                    ? `Posts (option ${i + 1})`
-                    : `Duration in ${draft.interval}s (option ${i + 1})`
-                }
-              >
-                <Input
-                  required
-                  type="number"
-                  min="1"
-                  max="100"
-                  step="1"
-                  value={v.quantity}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      prices: draft.prices.map((p, index) =>
-                        index === i
-                          ? { ...p, quantity: Number(e.target.value) }
-                          : p,
-                      ),
-                    })
-                  }
-                />
-              </Field>
-              <Field label={`Total price (RWF, option ${i + 1})`}>
-                <Input
-                  required
-                  type="number"
-                  min="1"
-                  max="1000000000"
-                  step="1"
-                  value={v.total}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      prices: draft.prices.map((p, index) =>
-                        index === i
-                          ? { ...p, total: Number(e.target.value) }
-                          : p,
-                      ),
-                    })
-                  }
-                />
-              </Field>
-              <Button
-                size="icon"
-                variant="ghost"
-                aria-label={`Remove price option ${i + 1}`}
-                disabled={draft.prices.length === 1}
-                onClick={() =>
+          <div className="flex items-end gap-2">
+            <Field label={draft.interval === "post" ? "Posts included" : `Duration in ${draft.interval}s`}>
+              <Input
+                required
+                type="number"
+                min="1"
+                max="100"
+                step="1"
+                value={draft.prices[0].quantity}
+                onChange={(e) =>
                   setDraft({
                     ...draft,
-                    prices: draft.prices.filter((_, index) => index !== i),
+                    prices: [{ ...draft.prices[0], quantity: Number(e.target.value) }],
                   })
                 }
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={draft.prices.length >= 20}
-            onClick={() => {
-              const used = new Set(draft.prices.map((v) => v.quantity));
-              const quantity = Array.from(
-                { length: 100 },
-                (_, i) => i + 1,
-              ).find((v) => !used.has(v))!;
-              setDraft({
-                ...draft,
-                prices: [
-                  ...draft.prices,
-                  {
-                    quantity,
-                    total: Math.min(1e9, draft.prices[0].total * quantity),
-                  },
-                ],
-              });
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            Add price option
-          </Button>
+              />
+            </Field>
+            <Field label="Total price (RWF)">
+              <Input
+                required
+                type="number"
+                min="1"
+                max="1000000000"
+                step="1"
+                value={draft.prices[0].total}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    prices: [{ ...draft.prices[0], total: Number(e.target.value) }],
+                  })
+                }
+              />
+            </Field>
+          </div>
           <p className="text-xs text-muted-foreground">
-            Enter the exact total for each option. A two-post pack can cost less
-            than two separate posts. All prices use whole Rwandan francs.
+            {draft.interval === "post"
+              ? "Need a different post count at a different price? Create another plan card for it — each plan has exactly one price."
+              : "Need a different duration at a different price? Create another plan card for it — each plan has exactly one price."}
           </p>
         </fieldset>
         <Field label="Benefits (one per line)">
