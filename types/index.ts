@@ -111,3 +111,90 @@ export interface AuditEntry {
   target: string;
   createdAt: string;
 }
+
+// ---------- Chat Management ----------
+
+export type ChatConversationType = "DIRECT" | "GROUP";
+export type ChatConversationStatus = "ACTIVE" | "SUSPENDED" | "DELETED";
+export type ChatParticipantRole = "OWNER" | "ADMIN" | "MEMBER";
+export type ChatParticipantStatus =
+  | "ACTIVE"
+  | "PENDING_APPROVAL"
+  | "REMOVED"
+  | "LEFT"
+  | "BANNED";
+
+export interface ChatParticipant {
+  userId: string;
+  role: ChatParticipantRole;
+  status: ChatParticipantStatus;
+  joinedAt: string;
+  profile: {
+    id: string;
+    displayName: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    avatarUrl: string | null;
+  } | null;
+}
+
+export interface ChatConversationSummary {
+  id: string;
+  type: ChatConversationType;
+  title: string | null;
+  description: string | null;
+  category: string | null;
+  isPublic: boolean;
+  requiresApproval: boolean;
+  avatarUrl: string | null;
+  status: ChatConversationStatus;
+  createdAt: string;
+  updatedAt: string;
+  participants: ChatParticipant[];
+}
+
+export interface ChatConversationsPayload {
+  items: ChatConversationSummary[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface ChatOverview {
+  totalConversations: number;
+  totalDirect: number;
+  totalGroup: number;
+  activeGroups: number;
+  publicGroups: number;
+  privateGroups: number;
+  suspendedGroups: number;
+  registeredGroupMembers: number;
+  totalMessages: number;
+  reportedConversations: number;
+}
+
+export type ChatReportStatus =
+  | "OPEN"
+  | "UNDER_REVIEW"
+  | "REVIEWED"
+  | "ACTIONED"
+  | "DISMISSED";
+export type ChatReportType = "user" | "group" | "conversation" | "message";
+
+export interface ChatReport {
+  id: string;
+  type: ChatReportType;
+  targetLabel: string;
+  targetId: string | null;
+  reporterId: string;
+  reporterLabel: string;
+  category: string | null;
+  reason: string;
+  details: string;
+  status: ChatReportStatus;
+  assignedTo: string | null;
+  moderatorNotes: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}

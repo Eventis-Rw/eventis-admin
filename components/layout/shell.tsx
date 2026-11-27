@@ -34,6 +34,7 @@ const eventisAccess: Record<string, ConsolePermission[]> = {
   "/eventis/organisers": ["users:read", "organisers:verify", "promotions:manage", "subscriptions:activate"],
   "/eventis/moderation": ["reports:manage"],
   "/eventis/audit": ["audit:read"],
+  "/eventis/chat": ["chat:view", "chat:groups:view", "chat:direct:view", "chat:reports:view"],
 };
 
 interface ShellUser {
