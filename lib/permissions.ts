@@ -1,9 +1,46 @@
 import type { SessionUser } from "@/types";
 
-export type Permission = "users:read" | "users:manage" | "events:read" | "organisers:read" | "bookings:read" | "reports:manage" | "audit:read";
+export type Permission =
+  | "users:read"
+  | "users:manage"
+  | "events:read"
+  | "organisers:read"
+  | "bookings:read"
+  | "reports:manage"
+  | "audit:read"
+  | "chat:view"
+  | "chat:direct:view"
+  | "chat:groups:view"
+  | "chat:groups:manage"
+  | "chat:groups:suspend"
+  | "chat:groups:delete"
+  | "chat:members:manage"
+  | "chat:reports:view"
+  | "chat:reports:manage"
+  | "chat:moderation:manage"
+  | "chat:analytics:view";
 
 const ROLE_PERMISSIONS: Record<string, readonly Permission[]> = {
-  admin: ["users:read", "users:manage", "events:read", "organisers:read", "bookings:read", "reports:manage", "audit:read"],
+  admin: [
+    "users:read",
+    "users:manage",
+    "events:read",
+    "organisers:read",
+    "bookings:read",
+    "reports:manage",
+    "audit:read",
+    "chat:view",
+    "chat:direct:view",
+    "chat:groups:view",
+    "chat:groups:manage",
+    "chat:groups:suspend",
+    "chat:groups:delete",
+    "chat:members:manage",
+    "chat:reports:view",
+    "chat:reports:manage",
+    "chat:moderation:manage",
+    "chat:analytics:view",
+  ],
 };
 
 export function can(user: Pick<SessionUser, "roles">, permission: Permission): boolean {

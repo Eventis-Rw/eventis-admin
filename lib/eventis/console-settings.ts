@@ -11,6 +11,17 @@ export const consolePermissions = {
   "promotions:manage": "Review and activate promotions",
   "subscriptions:activate": "View and activate organiser subscriptions",
   "settings:manage": "Edit global Eventis settings",
+  "chat:view": "View chat overview and analytics",
+  "chat:direct:view": "View direct conversations",
+  "chat:groups:view": "View groups and their members",
+  "chat:groups:manage": "Edit groups and transfer ownership",
+  "chat:groups:suspend": "Suspend or restore groups",
+  "chat:groups:delete": "Permanently delete groups",
+  "chat:members:manage": "Remove or ban group members",
+  "chat:reports:view": "View chat and group reports",
+  "chat:reports:manage": "Assign and annotate chat reports",
+  "chat:moderation:manage": "Action or dismiss chat reports",
+  "chat:analytics:view": "View chat platform analytics",
 } as const;
 
 export type ConsolePermission = keyof typeof consolePermissions;
